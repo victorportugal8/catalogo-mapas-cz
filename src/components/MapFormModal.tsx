@@ -1,3 +1,5 @@
+import { useState } from 'react'
+import { supabase } from '../lib/supabase'
 import { X } from 'lucide-react'
 
 interface MapFormModalProps {
@@ -6,34 +8,94 @@ interface MapFormModalProps {
 }
 
 export function MapFormModal({ isOpen, onClose }: MapFormModalProps) {
-  if (!isOpen) return null;
+    // Estados do formulário
+    const [link, setLink] = useState('')
+    const [nome, setNome] = useState('')
+    const [status, setStatus] = useState('false') // Usando string pro select, convertemos no submit
+    const [nota, setNota] = useState('')
+    const [tags, setTags] = useState('')
 
-  return (
+    // Estados de UI
+    const [isLoading, setIsLoading] = useState(false)
+    const [error, setError] = useState('')
+    
+    if (!isOpen) return null
+
+    const handleSubmit = async (e: React.SyntheticEvent<HTMLFormElement>) => {
+        e.preventDefault() // Evita que a página recarregue
+        setIsLoading(true)
+        setError('')
+
+        // Limpeza das tags: transforma "Challenge, Boss" em ['Challenge', 'Boss']
+        const tagsArray = tags
+        .split(',')
+        .map(tag => tag.trim())
+        .filter(tag => tag.length > 0)
+
+        // Prepara os dados para o Supabase
+        const novoMapa = {
+        link_workshop: link,
+        nome: nome,
+        status: status === 'true', // Converte a string do select para boolean
+        nota: nota ? parseInt(nota) : null,
+        tags: tagsArray,
+        }
+
+        // Envia para a tabela 'mapas'
+        const { error: supabaseError } = await supabase
+        .from('mapas')
+        .insert([novoMapa])
+
+        setIsLoading(false)
+
+        if (supabaseError) {
+        console.error(supabaseError)
+        // Se o erro for de link duplicado (aquela restrição UNIQUE que criamos)
+        if (supabaseError.code === '23505') {
+            setError('Este link da Workshop já está cadastrado!')
+        } else {
+            setError('Erro ao salvar o mapa. Verifique os dados.')
+        }
+        return
+        }
+
+        // Se deu certo, limpa os campos e fecha o modal
+        setLink('')
+        setNome('')
+        setStatus('false')
+        setNota('')
+        setTags('')
+        onClose()
+    }
+
+    return (
     <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
       <div className="bg-zombies-surface border border-neutral-800 rounded-lg w-full max-w-lg overflow-hidden shadow-2xl">
         
-        {/* Cabeçalho do Modal */}
         <div className="flex justify-between items-center p-4 border-b border-neutral-800">
           <h2 className="text-lg font-bold text-white">Adicionar Novo Mapa</h2>
-          <button 
-            onClick={onClose}
-            className="text-neutral-400 hover:text-white transition-colors cursor-pointer"
-          >
+          <button onClick={onClose} className="text-neutral-400 hover:text-white transition-colors cursor-pointer">
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        {/* Formulário */}
-        <form className="p-4 space-y-4">
+        <form onSubmit={handleSubmit} className="p-4 space-y-4">
           
-          {/* Link da Workshop */}
+          {/* Exibe erro se houver */}
+          {error && (
+            <div className="bg-red-500/10 border border-red-500/50 text-red-500 p-3 rounded-md text-sm">
+              {error}
+            </div>
+          )}
+
           <div>
-            <label className="block text-sm font-medium text-neutral-300 mb-1">
-              Link da Steam Workshop
-            </label>
+            <label className="block text-sm font-medium text-neutral-300 mb-1">Link da Steam Workshop *</label>
             <div className="flex gap-2">
               <input 
                 type="url" 
+                required
+                value={link}
+                onChange={(e) => setLink(e.target.value)}
                 placeholder="https://steamcommunity.com/sharedfiles/filedetails/?id=..."
                 className="flex-1 bg-neutral-900 border border-neutral-700 rounded-md px-3 py-2 text-white focus:outline-none focus:border-zombies-115"
               />
@@ -41,23 +103,27 @@ export function MapFormModal({ isOpen, onClose }: MapFormModalProps) {
                 Buscar
               </button>
             </div>
-            <p className="text-xs text-neutral-500 mt-1">Coloque o link para buscar nome e imagem automaticamente.</p>
           </div>
 
-          {/* Nome do Mapa */}
           <div>
-            <label className="block text-sm font-medium text-neutral-300 mb-1">Nome do Mapa</label>
+            <label className="block text-sm font-medium text-neutral-300 mb-1">Nome do Mapa *</label>
             <input 
               type="text" 
+              required
+              value={nome}
+              onChange={(e) => setNome(e.target.value)}
               className="w-full bg-neutral-900 border border-neutral-700 rounded-md px-3 py-2 text-white focus:outline-none focus:border-zombies-115"
             />
           </div>
 
-          {/* Status e Nota */}
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-neutral-300 mb-1">Status</label>
-              <select className="w-full bg-neutral-900 border border-neutral-700 rounded-md px-3 py-2 text-white focus:outline-none focus:border-zombies-115">
+              <select 
+                value={status}
+                onChange={(e) => setStatus(e.target.value)}
+                className="w-full bg-neutral-900 border border-neutral-700 rounded-md px-3 py-2 text-white focus:outline-none focus:border-zombies-115"
+              >
                 <option value="false">Não Jogado</option>
                 <option value="true">Jogado</option>
               </select>
@@ -67,29 +133,32 @@ export function MapFormModal({ isOpen, onClose }: MapFormModalProps) {
               <input 
                 type="number" 
                 min="1" max="5"
+                value={nota}
+                onChange={(e) => setNota(e.target.value)}
                 placeholder="Ex: 5"
                 className="w-full bg-neutral-900 border border-neutral-700 rounded-md px-3 py-2 text-white focus:outline-none focus:border-zombies-115"
               />
             </div>
           </div>
 
-          {/* Tags */}
           <div>
             <label className="block text-sm font-medium text-neutral-300 mb-1">Tags (separadas por vírgula)</label>
             <input 
               type="text" 
+              value={tags}
+              onChange={(e) => setTags(e.target.value)}
               placeholder="Ex: Challenge, Easter Egg, Boss Fight"
               className="w-full bg-neutral-900 border border-neutral-700 rounded-md px-3 py-2 text-white focus:outline-none focus:border-zombies-115"
             />
           </div>
 
-          {/* Botão de Salvar */}
           <div className="pt-4">
             <button 
               type="submit"
-              className="w-full bg-zombies-115 hover:bg-cyan-400 text-black font-bold py-2 px-4 rounded-md transition-colors"
+              disabled={isLoading}
+              className="w-full bg-zombies-115 hover:bg-cyan-400 text-black font-bold py-2 px-4 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center"
             >
-              Salvar Mapa
+              {isLoading ? 'Salvando...' : 'Salvar Mapa'}
             </button>
           </div>
         </form>
