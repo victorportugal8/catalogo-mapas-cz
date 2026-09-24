@@ -1,10 +1,14 @@
+import { useState } from 'react'
 import { Header } from './components/Header'
 import { Search } from 'lucide-react'
+import { MapFormModal } from './components/MapFormModal'
 
 function App() {
+  const [isModalOpen, setIsModalOpen] = useState(false)
   return (
     <div className="min-h-screen bg-zombies-background">
-      <Header />
+      <Header onNewMap={() => setIsModalOpen(true)}/>
+      <MapFormModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         
@@ -65,4 +69,4 @@ function App() {
   )
 }
 
-export default App;
+export default App
