@@ -10,7 +10,10 @@ function App() {
   const [mapas, setMapas] = useState<Mapa[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // 1. Função pura: apenas vai no Supabase e devolve os dados (não mexe nos states)
+  // Gerenciamento do estado de busca
+  const [searchQuery, setSearchQuery] = useState('')
+
+  // Função pura: apenas vai no Supabase e devolve os dados (não mexe nos states)
   const obterMapasDoBanco = async () => {
     const { data, error } = await supabase
       .from('mapas')
@@ -24,15 +27,15 @@ function App() {
     return data || []
   }
 
-  // 2. useEffect seguro: avisa ao linter que o estado só muda no callback (.then)
+  // useEffect seguro: avisa ao linter que o estado só muda no callback (.then)
   useEffect(() => {
     obterMapasDoBanco().then((dados) => {
       setMapas(dados)
       setIsLoading(false)
-    });
-  }, []);
+    })
+  }, [])
 
-  // 3. Atualização após fechar o modal
+  // Atualização após fechar o modal
   const handleCloseModal = () => {
     setIsModalOpen(false)
     setIsLoading(true) // Mostra o spinner de novo enquanto busca
@@ -42,6 +45,15 @@ function App() {
       setIsLoading(false)
     })
   }
+
+  // Filtragem de mapas com base na busca
+  const mapasFiltrados = mapas.filter((mapa) => {
+    const termoBusca = searchQuery.toLowerCase()
+    const nomeBate = mapa.nome.toLowerCase().includes(termoBusca)
+    const tagBate = mapa.tags?.some(tag => tag.toLowerCase().includes(termoBusca))
+    
+    return nomeBate || tagBate
+  })
 
   return (
     <div className="min-h-screen bg-zombies-background">
@@ -69,6 +81,8 @@ function App() {
             <input
               type="text"
               placeholder="Buscar mapa..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
               className="block w-full pl-10 pr-3 py-2 border border-neutral-700 rounded-md leading-5 bg-zombies-surface text-neutral-300 placeholder-neutral-500 focus:outline-none focus:border-zombies-115 focus:ring-1 focus:ring-zombies-115 transition-colors"
             />
           </div>
@@ -80,7 +94,7 @@ function App() {
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {mapas.map((mapa) => (
+            {mapasFiltrados.map((mapa) => (
               <div key={mapa.id} className="bg-zombies-surface rounded-lg overflow-hidden border border-neutral-800 hover:border-neutral-700 transition-colors group cursor-pointer flex flex-col">
                 
                 <div className="aspect-video bg-neutral-900 relative">
@@ -123,10 +137,14 @@ function App() {
               </div>
             ))}
             
-            {!isLoading && mapas.length === 0 && (
+            {!isLoading && mapasFiltrados.length === 0 && (
               <div className="col-span-full flex flex-col items-center justify-center py-20 text-neutral-500">
                 <p className="text-lg">Nenhum mapa encontrado.</p>
-                <p className="text-sm">Clique em "Novo Mapa" para começar seu acervo.</p>
+                {searchQuery ? (
+                  <p className="text-sm">Tente outro termo de busca.</p>
+                ) : (
+                  <p className="text-sm">Clique em "Novo Mapa" para começar seu acervo.</p>
+                )}
               </div>
             )}
           </div>
