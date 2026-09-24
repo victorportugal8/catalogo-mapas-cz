@@ -1,122 +1,68 @@
-import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import './App.css'
+import { Header } from './components/Header'
+import { Search } from 'lucide-react'
 
 function App() {
-  const [count, setCount] = useState(0)
-
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+    <div className="min-h-screen bg-zombies-background">
+      <Header />
 
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
+        {/* Barra de Ferramentas (Filtros e Busca) */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
+          <h2 className="text-2xl font-semibold text-white">Meus Mapas</h2>
+          
+          <div className="relative w-full sm:w-72">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <Search className="h-5 w-5 text-neutral-500" />
+            </div>
+            <input
+              type="text"
+              placeholder="Buscar mapa..."
+              className="block w-full pl-10 pr-3 py-2 border border-neutral-700 rounded-md leading-5 bg-zombies-surface text-neutral-300 placeholder-neutral-500 focus:outline-none focus:border-zombies-115 focus:ring-1 focus:ring-zombies-115 transition-colors"
+            />
+          </div>
         </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
+        {/* Grid de Mapas (Galeria) */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          
+          {/* === CARD MOCK (Exemplo visual) === */}
+          <div className="bg-zombies-surface rounded-lg overflow-hidden border border-neutral-800 hover:border-neutral-700 transition-colors group cursor-pointer">
+            {/* Imagem (Placeholder) */}
+            <div className="aspect-video bg-neutral-900 relative">
+              <div className="absolute inset-0 flex items-center justify-center text-neutral-600">
+                Sem imagem original
+              </div>
+              {/* Badge de Status */}
+              <div className="absolute top-2 right-2 bg-green-500/20 text-green-400 border border-green-500/20 px-2 py-1 rounded text-xs font-bold uppercase tracking-wider">
+                Jogado
+              </div>
+            </div>
+            
+            {/* Informações */}
+            <div className="p-4">
+              <h3 className="font-bold text-lg text-white mb-2 truncate group-hover:text-zombies-115 transition-colors">
+                Leviathan
+              </h3>
+              
+              {/* Tags */}
+              <div className="flex flex-wrap gap-2">
+                <span className="text-xs bg-neutral-800 text-neutral-300 px-2 py-1 rounded border border-neutral-700">
+                  Easter Egg
+                </span>
+                <span className="text-xs bg-neutral-800 text-neutral-300 px-2 py-1 rounded border border-neutral-700">
+                  Boss Fight
+                </span>
+              </div>
+            </div>
+          </div>
+          {/* === FIM DO CARD MOCK === */}
+
+        </div>
+      </main>
+    </div>
   )
 }
 
-export default App
+export default App;
