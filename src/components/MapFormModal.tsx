@@ -1,38 +1,41 @@
 import { useState } from 'react'
 import { X, Loader2, Image as ImageIcon } from 'lucide-react'
 import { supabase } from '../lib/supabase'
+import type { Mapa } from '../types'
 
 interface MapFormModalProps {
   isOpen: boolean
   onClose: () => void
+  mapaParaEditar?: Mapa | null // Pode receber um mapa para edição
 }
 
-export function MapFormModal({ isOpen, onClose }: MapFormModalProps) {
-  const [link, setLink] = useState('')
-  const [nome, setNome] = useState('')
-  const [status, setStatus] = useState('false')
-  const [nota, setNota] = useState('')
-  const [tags, setTags] = useState('')
-  const [imagemUrl, setImagemUrl] = useState('') // Estado para a imagem
+export function MapFormModal({ isOpen, onClose, mapaParaEditar }: MapFormModalProps) {
+  // Inicializamos os valores DIRETAMENTE pegando do mapaParaEditar (se existir)
+  const [link, setLink] = useState(mapaParaEditar?.link_workshop || '')
+  const [nome, setNome] = useState(mapaParaEditar?.nome || '')
+  const [status, setStatus] = useState(mapaParaEditar?.status ? 'true' : 'false')
+  const [nota, setNota] = useState(mapaParaEditar?.nota ? String(mapaParaEditar.nota) : '')
+  const [tags, setTags] = useState(mapaParaEditar?.tags ? mapaParaEditar.tags.join(', ') : '')
+  const [imagemUrl, setImagemUrl] = useState(mapaParaEditar?.imagem_url || '')
   
   const [isLoading, setIsLoading] = useState(false)
-  const [isSearchingSteam, setIsSearchingSteam] = useState(false) // Loading do botão buscar
+  const [isSearchingSteam, setIsSearchingSteam] = useState(false)
   const [error, setError] = useState('')
+
+  // O useEffect que existia aqui foi totalmente apagado!
 
   if (!isOpen) return null
 
-  // Função que busca os dados na Steam
   const handleSteamSearch = async () => {
     if (!link.includes('steamcommunity.com/sharedfiles/filedetails/?id=')) {
       setError('Por favor, insira um link válido da Steam Workshop.')
       return
     }
 
-    setIsSearchingSteam(true);
+    setIsSearchingSteam(true)
     setError('')
 
     try {
-      // Aqui é a mágica: chamamos a sua Edge Function rodando lá no Supabase
       const { data, error } = await supabase.functions.invoke('steam-scraper', {
         body: { url: link }
       })
@@ -43,11 +46,11 @@ export function MapFormModal({ isOpen, onClose }: MapFormModalProps) {
       if (data.image) setImagemUrl(data.image)
       
       if (!data.title && !data.image) {
-        setError('Página não encontrada ou mapa privado na Steam.');
+        setError('Página não encontrada ou mapa privado na Steam.')
       }
     } catch (err) {
       console.error(err)
-      setError('Erro ao buscar dados na Steam pela Edge Function.');
+      setError('Erro ao buscar dados na Steam pela Edge Function.')
     } finally {
       setIsSearchingSteam(false)
     }
@@ -61,20 +64,22 @@ export function MapFormModal({ isOpen, onClose }: MapFormModalProps) {
     const tagsArray = tags
       .split(',')
       .map(tag => tag.trim())
-      .filter(tag => tag.length > 0)
+      .filter(tag => tag.length > 0);
 
-    const novoMapa = {
+    const dadosMapa = {
       link_workshop: link,
       nome: nome,
       status: status === 'true',
       nota: nota ? parseInt(nota) : null,
       tags: tagsArray,
-      imagem_url: imagemUrl, // Salvando a URL da imagem no banco
+      imagem_url: imagemUrl,
     }
 
-    const { error: supabaseError } = await supabase
-      .from('mapas')
-      .insert([novoMapa])
+    // Removemos o 'let' e o if/else longo.
+    // Usamos um ternário (?) para decidir qual chamada fazer diretamente em uma 'const'.
+    const { error: supabaseError } = mapaParaEditar
+      ? await supabase.from('mapas').update(dadosMapa).eq('id', mapaParaEditar.id)
+      : await supabase.from('mapas').insert([dadosMapa])
 
     setIsLoading(false)
 
@@ -87,13 +92,6 @@ export function MapFormModal({ isOpen, onClose }: MapFormModalProps) {
       return
     }
 
-    // Limpa tudo ao fechar
-    setLink('')
-    setNome('')
-    setStatus('false')
-    setNota('')
-    setTags('')
-    setImagemUrl('')
     onClose()
   }
 
@@ -102,12 +100,16 @@ export function MapFormModal({ isOpen, onClose }: MapFormModalProps) {
       <div className="bg-zombies-surface border border-neutral-800 rounded-lg w-full max-w-lg shadow-2xl my-8">
         
         <div className="flex justify-between items-center p-4 border-b border-neutral-800">
-          <h2 className="text-lg font-bold text-white">Adicionar Novo Mapa</h2>
+          {/* NOVO: Muda o título se estiver editando */}
+          <h2 className="text-lg font-bold text-white">
+            {mapaParaEditar ? 'Editar Mapa' : 'Adicionar Novo Mapa'}
+          </h2>
           <button onClick={onClose} className="text-neutral-400 hover:text-white transition-colors cursor-pointer">
             <X className="w-5 h-5" />
           </button>
         </div>
 
+        {/* O formulário continua idêntico daqui para baixo */}
         <form onSubmit={handleSubmit} className="p-4 space-y-4">
           {error && (
             <div className="bg-red-500/10 border border-red-500/50 text-red-500 p-3 rounded-md text-sm">
@@ -115,7 +117,6 @@ export function MapFormModal({ isOpen, onClose }: MapFormModalProps) {
             </div>
           )}
 
-          {/* Preview da Imagem */}
           <div className="w-full h-40 bg-neutral-900 rounded-lg border border-neutral-800 flex items-center justify-center overflow-hidden relative">
             {imagemUrl ? (
               <img src={imagemUrl} alt="Preview" className="w-full h-full object-cover" />
@@ -207,7 +208,8 @@ export function MapFormModal({ isOpen, onClose }: MapFormModalProps) {
               disabled={isLoading}
               className="w-full bg-zombies-115 hover:bg-cyan-400 text-black font-bold py-2 px-4 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center"
             >
-              {isLoading ? 'Salvando...' : 'Salvar Mapa'}
+              {/* Muda o texto do botão */}
+              {isLoading ? 'Salvando...' : (mapaParaEditar ? 'Atualizar Mapa' : 'Salvar Mapa')}
             </button>
           </div>
         </form>

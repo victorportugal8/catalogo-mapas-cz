@@ -1,14 +1,15 @@
 import { useState, useEffect } from 'react'
 import { Header } from './components/Header'
 import { MapFormModal } from './components/MapFormModal'
-import { Search, Loader2 } from 'lucide-react'
+import { Search, Loader2, Trash2, Edit2 } from 'lucide-react'
 import { supabase } from './lib/supabase'
 import type { Mapa } from './types/'
 
 function App() {
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [mapas, setMapas] = useState<Mapa[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [mapas, setMapas] = useState<Mapa[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [mapaEditando, setMapaEditando] = useState<Mapa | null>(null)
 
   // Gerenciamento do estado de busca
   const [searchQuery, setSearchQuery] = useState('')
@@ -46,6 +47,27 @@ function App() {
     })
   }
 
+  const handleDeleteMapa = async (id: string, nome: string) => {
+    // Confirmação nativa do navegador para evitar cliques acidentais
+    const confirmacao = window.confirm(`Tem certeza que deseja excluir o mapa "${nome}"?`)
+    if (!confirmacao) return
+
+    // Deleta do Supabase
+    const { error } = await supabase
+      .from('mapas')
+      .delete()
+      .eq('id', id)
+
+    if (error) {
+      console.error('Erro ao deletar mapa:', error)
+      alert('Erro ao excluir o mapa.')
+      return;
+    }
+
+    // Atualiza a lista na tela imediatamente removendo o mapa excluído
+    setMapas(mapas.filter(mapa => mapa.id !== id))
+  }
+
   // Filtragem de mapas com base na busca
   const mapasFiltrados = mapas.filter((mapa) => {
     const termoBusca = searchQuery.toLowerCase()
@@ -57,11 +79,13 @@ function App() {
 
   return (
     <div className="min-h-screen bg-zombies-background">
-      <Header onNewMap={() => setIsModalOpen(true)} />
+      <Header onNewMap={() => { setMapaEditando(null); setIsModalOpen(true); }} />
 
       <MapFormModal 
+        key={isModalOpen ? (mapaEditando ? mapaEditando.id : 'novo-mapa') : 'fechado'}
         isOpen={isModalOpen} 
         onClose={handleCloseModal} 
+        mapaParaEditar={mapaEditando}
       />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -110,12 +134,43 @@ function App() {
                     </div>
                   )}
                   
-                  <div className={`absolute top-2 right-2 px-2 py-1 rounded text-xs font-bold uppercase tracking-wider border ${
-                    mapa.status 
-                      ? 'bg-green-500/20 text-green-400 border-green-500/20' 
-                      : 'bg-neutral-800/80 text-neutral-400 border-neutral-700'
-                  }`}>
-                    {mapa.status ? 'Jogado' : 'Não Jogado'}
+                  {/* Container flex no canto superior direito para agrupar o botão e a badge */}
+                  <div className="absolute top-2 right-2 flex gap-2 items-center">
+                    
+                    {/* Botão de Editar */}
+                    <button 
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setMapaEditando(mapa);
+                        setIsModalOpen(true);
+                      }}
+                      className="bg-black/60 hover:bg-blue-600 text-neutral-400 hover:text-white p-1.5 rounded transition-all backdrop-blur-sm border border-neutral-700/50 hover:border-blue-500 opacity-100 lg:opacity-0 lg:group-hover:opacity-100"
+                      title="Editar mapa"
+                    >
+                      <Edit2 className="w-4 h-4" />
+                    </button>
+
+                    {/* Botão de Excluir */}
+                    <button 
+                      onClick={(e) => {
+                        e.preventDefault(); // Evita conflitos de clique
+                        handleDeleteMapa(mapa.id, mapa.nome);
+                      }}
+                      className="bg-black/60 hover:bg-red-600 text-neutral-400 hover:text-white p-1.5 rounded transition-all backdrop-blur-sm border border-neutral-700/50 hover:border-red-500 opacity-100 lg:opacity-0 lg:group-hover:opacity-100"
+                      title="Excluir mapa"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+
+                    {/* Badge de Status (Já existia, só movemos para dentro desta div flex) */}
+                    <div className={`px-2 py-1 rounded text-xs font-bold uppercase tracking-wider border ${
+                      mapa.status 
+                        ? 'bg-green-500/20 text-green-400 border-green-500/20' 
+                        : 'bg-neutral-800/80 text-neutral-400 border-neutral-700'
+                    }`}>
+                      {mapa.status ? 'Jogado' : 'Não Jogado'}
+                    </div>
+                    
                   </div>
                 </div>
                 
