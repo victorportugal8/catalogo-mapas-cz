@@ -88,8 +88,7 @@ function App() {
 
     // Filtro de Status
     let passaStatus = true
-    if (statusFilter === 'jogado') passaStatus = mapa.status === true
-    if (statusFilter === 'nao-jogado') passaStatus = mapa.status === false
+    if (statusFilter !== 'todos') passaStatus = mapa.status === statusFilter
 
     // Filtro de Tag (Dropdown)
     let passaTag = true
@@ -185,6 +184,7 @@ function App() {
               <option value="todos">Todos os Status</option>
               <option value="jogado">Jogados</option>
               <option value="nao-jogado">Não Jogados</option>
+              <option value="finalizado">Finalizados</option>
             </select>
 
             {/* Busca por Texto */}
@@ -285,13 +285,15 @@ function App() {
                       <Trash2 className="w-4 h-4" />
                     </button>
 
-                    {/* Badge de Status (Já existia, só movemos para dentro desta div flex) */}
-                    <div className={`px-2 py-1 rounded text-xs font-bold uppercase tracking-wider border ${
-                      mapa.status 
+                    {/* Badge de Status */}
+                    <div className={`px-2 py-1 rounded text-xs font-bold uppercase tracking-wider border backdrop-blur-sm ${
+                      mapa.status === 'finalizado' 
+                        ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' 
+                        : mapa.status === 'jogado' 
                         ? 'bg-green-500/20 text-green-400 border-green-500/20' 
                         : 'bg-neutral-800/80 text-neutral-400 border-neutral-700'
                     }`}>
-                      {mapa.status ? 'Jogado' : 'Não Jogado'}
+                      {mapa.status === 'finalizado' ? 'Finalizado' : mapa.status === 'jogado' ? 'Jogado' : 'Não Jogado'}
                     </div>
                     
                   </div>

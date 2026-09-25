@@ -13,7 +13,7 @@ export function MapFormModal({ isOpen, onClose, mapaParaEditar }: MapFormModalPr
   // Inicializamos os valores DIRETAMENTE pegando do mapaParaEditar (se existir)
   const [link, setLink] = useState(mapaParaEditar?.link_workshop || '')
   const [nome, setNome] = useState(mapaParaEditar?.nome || '')
-  const [status, setStatus] = useState(mapaParaEditar?.status ? 'true' : 'false')
+  const [status, setStatus] = useState(mapaParaEditar?.status || 'nao_jogado')
   const [nota, setNota] = useState(mapaParaEditar?.nota ? String(mapaParaEditar.nota) : '')
   const [tags, setTags] = useState(mapaParaEditar?.tags ? mapaParaEditar.tags.join(', ') : '')
   const [imagemUrl, setImagemUrl] = useState(mapaParaEditar?.imagem_url || '')
@@ -69,7 +69,7 @@ export function MapFormModal({ isOpen, onClose, mapaParaEditar }: MapFormModalPr
     const dadosMapa = {
       link_workshop: link,
       nome: nome,
-      status: status === 'true',
+      status: status,
       nota: nota ? parseInt(nota) : null,
       tags: tagsArray,
       imagem_url: imagemUrl,
@@ -174,8 +174,9 @@ export function MapFormModal({ isOpen, onClose, mapaParaEditar }: MapFormModalPr
                 onChange={(e) => setStatus(e.target.value)}
                 className="w-full bg-neutral-900 border border-neutral-700 rounded-md px-3 py-2 text-white focus:outline-none focus:border-zombies-115"
               >
-                <option value="false">Não Jogado</option>
-                <option value="true">Jogado</option>
+                <option value="nao_jogado">Não Jogado</option>
+                <option value="jogado">Jogado</option>
+                <option value="finalizado">Finalizado</option>
               </select>
             </div>
             <div>

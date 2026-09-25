@@ -2,7 +2,7 @@ export interface Mapa {
   id: string
   nome: string
   link_workshop: string
-  status: boolean
+  status: string
   nota: number | null
   imagem_url: string | null
   tags: string[]
