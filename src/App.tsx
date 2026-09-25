@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Header } from './components/Header'
 import { MapFormModal } from './components/MapFormModal'
-import { Search, Loader2, Trash2, Edit2, Star } from 'lucide-react'
+import { Search, Trash2, Edit2, Star } from 'lucide-react'
 import { supabase } from './lib/supabase'
 import type { Mapa } from './types/'
 
@@ -164,30 +164,62 @@ function App() {
           </div>
         </div>
 
+        {/* Estado de Carregamento (Skeleton) */}
         {isLoading ? (
-          <div className="flex justify-center items-center py-20">
-            <Loader2 className="w-8 h-8 text-zombies-115 animate-spin" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {/* Cria 8 esqueletos para preencher bem a tela de quem usa PC */}
+            {[1, 2, 3, 4, 5, 6, 7, 8].map((item) => (
+              <div key={item} className="bg-zombies-surface rounded-lg overflow-hidden border border-neutral-800 flex flex-col animate-pulse">
+                
+                {/* Skeleton da Imagem */}
+                <div className="aspect-video bg-neutral-800/50"></div>
+                
+                {/* Skeleton do Conteúdo (Textos e Tags) */}
+                <div className="p-4 flex flex-col flex-1 gap-3">
+                  {/* Título */}
+                  <div className="h-6 bg-neutral-700/50 rounded w-3/4"></div>
+                  
+                  {/* Espaço das estrelas */}
+                  <div className="flex gap-1 mb-1">
+                    {[1, 2, 3, 4, 5].map(star => (
+                      <div key={star} className="w-4 h-4 bg-neutral-800/80 rounded-sm"></div>
+                    ))}
+                  </div>
+                  
+                  {/* Tags na parte inferior */}
+                  <div className="flex flex-wrap gap-2 mt-auto">
+                    <div className="h-6 w-16 bg-neutral-800/80 rounded"></div>
+                    <div className="h-6 w-24 bg-neutral-800/80 rounded"></div>
+                    <div className="h-6 w-20 bg-neutral-800/80 rounded"></div>
+                  </div>
+                </div>
+
+              </div>
+            ))}
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {mapasFiltrados.map((mapa) => (
-              <div key={mapa.id} className="bg-zombies-surface rounded-lg overflow-hidden border border-neutral-800 hover:border-neutral-700 transition-colors group cursor-pointer flex flex-col">
-                
-                <div className="aspect-video bg-neutral-900 relative">
+              <div key={mapa.id} className="bg-zombies-surface rounded-lg overflow-hidden border border-neutral-800 transition-all duration-300 hover:-translate-y-1 hover:border-zombies-115 hover:shadow-[0_0_20px_rgba(0,255,255,0.15)] group cursor-pointer flex flex-col">
+                <div className="aspect-video bg-neutral-900 relative group/image overflow-hidden">
                   {mapa.imagem_url ? (
                     <img 
                       src={mapa.imagem_url} 
                       alt={`Capa do mapa ${mapa.nome}`} 
-                      className="w-full h-full object-cover"
+                      // Adicionamos transição de escala (zoom sutil) na imagem
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                     />
                   ) : (
                     <div className="absolute inset-0 flex items-center justify-center text-neutral-600 text-sm">
                       Sem imagem
                     </div>
                   )}
+
+                  {/* Gradiente de Proteção (vai escurecer suavemente o topo da imagem) */}
+                  <div className="absolute top-0 inset-x-0 h-24 bg-linear-to-b from-black/80 via-black/30 to-transparent pointer-events-none z-0" />
                   
                   {/* Container flex no canto superior direito para agrupar o botão e a badge */}
-                  <div className="absolute top-2 right-2 flex gap-2 items-center">
+                  <div className="absolute top-2 right-2 flex gap-2 items-center z-10">
                     
                     {/* Botão de Editar */}
                     <button 
