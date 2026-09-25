@@ -114,7 +114,14 @@ function App() {
 
     // Filtro de Status
     let passaStatus = true
-    if (statusFilter !== 'todos') passaStatus = mapa.status === statusFilter
+    if (statusFilter !== 'todos') {
+      if (statusFilter === 'nao_jogado') {
+        // Abrange a string nova, o booleano antigo (false) e valores vazios (null/undefined)
+        passaStatus = mapa.status === 'nao_jogado' || !mapa.status
+      } else {
+        passaStatus = mapa.status === statusFilter
+      }
+    }
 
     // Filtro de Tag (Dropdown)
     let passaTag = true
@@ -209,7 +216,7 @@ function App() {
             >
               <option value="todos">Todos os Status</option>
               <option value="jogado">Jogados</option>
-              <option value="nao-jogado">Não Jogados</option>
+              <option value="nao_jogado">Não Jogados</option>
               <option value="finalizado">Finalizados</option>
             </select>
 
