@@ -17,7 +17,7 @@ function App() {
   // Estados para os filtros
   const [statusFilter, setStatusFilter] = useState('todos') // 'todos', 'jogado', 'nao-jogado'
   const [tagFilter, setTagFilter] = useState('todas') // 'todas' ou o nome da tag
-  const [sortFilter, setSortFilter] = useState('recentes') // 'recentes' ou 'antigos'
+  const [sortFilter, setSortFilter] = useState('az') // 'az' ou 'za'
 
   // Função pura: apenas vai no Supabase e devolve os dados (não mexe nos states)
   const obterMapasDoBanco = async () => {
