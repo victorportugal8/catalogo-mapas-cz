@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Header } from './components/Header'
 import { MapFormModal } from './components/MapFormModal'
-import { Search, Trash2, Edit2, Star } from 'lucide-react'
+import { Search, Trash2, Edit2, Star, LayoutGrid, List as ListIcon } from 'lucide-react'
 import { supabase } from './lib/supabase'
 import type { Mapa } from './types/'
 
@@ -18,6 +18,7 @@ function App() {
   const [statusFilter, setStatusFilter] = useState('todos') // 'todos', 'jogado', 'nao-jogado'
   const [tagFilter, setTagFilter] = useState('todas') // 'todas' ou o nome da tag
   const [sortFilter, setSortFilter] = useState('az') // 'az' ou 'za'
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
 
   // Função pura: apenas vai no Supabase e devolve os dados (não mexe nos states)
   const obterMapasDoBanco = async () => {
@@ -233,6 +234,27 @@ function App() {
                 className="block w-full pl-10 pr-3 py-2 border border-neutral-700 rounded-md leading-5 bg-zombies-surface text-neutral-300 placeholder-neutral-500 focus:outline-none focus:border-zombies-115 focus:ring-1 focus:ring-zombies-115 transition-colors text-sm"
               />
             </div>
+            {/* Botões de Alternância Grid/Lista */}
+            <div className="flex bg-neutral-900 border border-neutral-700 rounded-md p-1 h-9.5">
+              <button
+                onClick={() => setViewMode('grid')}
+                className={`p-1.5 rounded transition-colors flex items-center justify-center ${
+                  viewMode === 'grid' ? 'bg-neutral-700 text-zombies-115' : 'text-neutral-500 hover:text-neutral-300'
+                }`}
+                title="Visualização em Grade"
+              >
+                <LayoutGrid className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => setViewMode('list')}
+                className={`p-1.5 rounded transition-colors flex items-center justify-center ${
+                  viewMode === 'list' ? 'bg-neutral-700 text-zombies-115' : 'text-neutral-500 hover:text-neutral-300'
+                }`}
+                title="Visualização em Lista"
+              >
+                <ListIcon className="w-4 h-4" />
+              </button>
+            </div>
           </div>
         </div>
 
@@ -270,123 +292,191 @@ function App() {
             ))}
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {mapasFiltrados.map((mapa) => (
-              <div key={mapa.id} className="bg-zombies-surface rounded-lg overflow-hidden border border-neutral-800 transition-all duration-300 hover:-translate-y-1 hover:border-zombies-115 hover:shadow-[0_0_20px_rgba(0,255,255,0.15)] group cursor-pointer flex flex-col">
-                <div className="aspect-video bg-neutral-900 relative group/image overflow-hidden">
-                  {mapa.imagem_url ? (
-                    <img 
-                      src={mapa.imagem_url} 
-                      alt={`Capa do mapa ${mapa.nome}`} 
-                      // Transição de escala (zoom sutil) na imagem
-                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                    />
-                  ) : (
-                    <div className="absolute inset-0 flex items-center justify-center text-neutral-600 text-sm">
-                      Sem imagem
-                    </div>
-                  )}
-
-                  {/* Gradiente de Proteção (vai escurecer suavemente o topo da imagem) */}
-                  <div className="absolute top-0 inset-x-0 h-24 bg-linear-to-b from-black/80 via-black/30 to-transparent pointer-events-none z-0" />
-                  
-                  {/* Container flex no canto superior direito para agrupar o botão e a badge */}
-                  <div className="absolute top-2 right-2 flex gap-2 items-center z-10">
-                    
-                    {/* Botão de Editar */}
-                    <button 
-                      onClick={(e) => {
-                        e.preventDefault()
-                        setMapaEditando(mapa)
-                        setIsModalOpen(true)
-                      }}
-                      className="bg-black/60 hover:bg-blue-600 text-neutral-400 hover:text-white p-1.5 rounded transition-all backdrop-blur-sm border border-neutral-700/50 hover:border-blue-500 opacity-100 lg:opacity-0 lg:group-hover:opacity-100"
-                      title="Editar mapa"
-                    >
-                      <Edit2 className="w-4 h-4" />
-                    </button>
-
-                    {/* Botão de Excluir */}
-                    <button 
-                      onClick={(e) => {
-                        e.preventDefault(); // Evita conflitos de clique
-                        handleDeleteMapa(mapa.id, mapa.nome);
-                      }}
-                      className="bg-black/60 hover:bg-red-600 text-neutral-400 hover:text-white p-1.5 rounded transition-all backdrop-blur-sm border border-neutral-700/50 hover:border-red-500 opacity-100 lg:opacity-0 lg:group-hover:opacity-100"
-                      title="Excluir mapa"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-
-                    {/* Badge de Status Interativa */}
-                    <button 
-                      onClick={(e) => {
-                        e.preventDefault()
-                        handleToggleStatus(mapa.id, mapa.status)
-                      }}
-                      className={`px-2 py-1 rounded text-xs font-bold uppercase tracking-wider border backdrop-blur-sm transition-all duration-200 hover:scale-105 active:scale-95 cursor-pointer shadow-lg ${
-                        mapa.status === 'finalizado' 
-                          ? 'bg-yellow-500/20 hover:bg-yellow-500/30 text-yellow-400 border-yellow-500/40' 
-                          : mapa.status === 'jogado' 
-                          ? 'bg-green-500/20 hover:bg-green-500/30 text-green-400 border-green-500/40' 
-                          : 'bg-neutral-800/80 hover:bg-neutral-700/90 text-neutral-400 border-neutral-600'
-                      }`}
-                      title="Clique para alterar o status"
-                    >
-                      {mapa.status === 'finalizado' ? 'Finalizado' : mapa.status === 'jogado' ? 'Jogado' : 'Não Jogado'}
-                    </button>
-                    
-                  </div>
-                </div>
-                
-                <div className="p-4 flex flex-col flex-1">
-                  <h3 className="font-bold text-lg text-white mb-2 line-clamp-1 group-hover:text-zombies-115 transition-colors" title={mapa.nome}>
-                    {mapa.nome}
-                  </h3>
-
-                  {/* Sistema visual de estrelas (Só exibe se o mapa tiver nota) */}
-                  {mapa.nota ? (
-                    <div className="flex items-center gap-1 mb-3">
-                      {[1, 2, 3, 4, 5].map((star) => (
-                        <Star 
-                          key={star} 
-                          className={`w-4 h-4 ${
-                            mapa.nota && mapa.nota >= star 
-                              ? 'text-yellow-500 fill-yellow-500' // Estrela preenchida
-                              : 'text-neutral-700'                // Estrela vazia
-                          }`} 
+          <>
+            {viewMode === 'grid' ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {mapasFiltrados.map((mapa) => (
+                  <div key={mapa.id} className="bg-zombies-surface rounded-lg overflow-hidden border border-neutral-800 transition-all duration-300 hover:-translate-y-1 hover:border-zombies-115 hover:shadow-[0_0_20px_rgba(0,255,255,0.15)] group cursor-pointer flex flex-col">
+                    <div className="aspect-video bg-neutral-900 relative group/image overflow-hidden">
+                      {mapa.imagem_url ? (
+                        <img 
+                          src={mapa.imagem_url} 
+                          alt={`Capa do mapa ${mapa.nome}`} 
+                          // Transição de escala (zoom sutil) na imagem
+                          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                         />
-                      ))}
+                      ) : (
+                        <div className="absolute inset-0 flex items-center justify-center text-neutral-600 text-sm">
+                          Sem imagem
+                        </div>
+                      )}
+                      {/* Gradiente de Proteção (vai escurecer suavemente o topo da imagem) */}
+                      <div className="absolute top-0 inset-x-0 h-24 bg-linear-to-b from-black/80 via-black/30 to-transparent pointer-events-none z-0" />                   
+                      {/* Container flex no canto superior direito para agrupar o botão e a badge */}
+                      <div className="absolute top-2 right-2 flex gap-2 items-center z-10">
+                        {/* Botão de Editar */}
+                        <button 
+                          onClick={(e) => {
+                            e.preventDefault()
+                            setMapaEditando(mapa)
+                            setIsModalOpen(true)
+                          }}
+                          className="bg-black/60 hover:bg-blue-600 text-neutral-400 hover:text-white p-1.5 rounded transition-all backdrop-blur-sm border border-neutral-700/50 hover:border-blue-500 opacity-100 lg:opacity-0 lg:group-hover:opacity-100"
+                          title="Editar mapa"
+                        >
+                          <Edit2 className="w-4 h-4" />
+                        </button>
+                        {/* Botão de Excluir */}
+                        <button 
+                          onClick={(e) => {
+                            e.preventDefault(); // Evita conflitos de clique
+                            handleDeleteMapa(mapa.id, mapa.nome);
+                          }}
+                          className="bg-black/60 hover:bg-red-600 text-neutral-400 hover:text-white p-1.5 rounded transition-all backdrop-blur-sm border border-neutral-700/50 hover:border-red-500 opacity-100 lg:opacity-0 lg:group-hover:opacity-100"
+                          title="Excluir mapa"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                        {/* Badge de Status Interativa */}
+                        <button 
+                          onClick={(e) => {
+                            e.preventDefault()
+                            handleToggleStatus(mapa.id, mapa.status)
+                          }}
+                          className={`px-2 py-1 rounded text-xs font-bold uppercase tracking-wider border backdrop-blur-sm transition-all duration-200 hover:scale-105 active:scale-95 cursor-pointer shadow-lg ${
+                            mapa.status === 'finalizado' 
+                              ? 'bg-yellow-500/20 hover:bg-yellow-500/30 text-yellow-400 border-yellow-500/40' 
+                              : mapa.status === 'jogado' 
+                              ? 'bg-green-500/20 hover:bg-green-500/30 text-green-400 border-green-500/40' 
+                              : 'bg-neutral-800/80 hover:bg-neutral-700/90 text-neutral-400 border-neutral-600'
+                          }`}
+                          title="Clique para alterar o status"
+                        >
+                          {mapa.status === 'finalizado' ? 'Finalizado' : mapa.status === 'jogado' ? 'Jogado' : 'Não Jogado'}
+                        </button>
+                      </div>
                     </div>
-                  ) : (
-                    /* Espaçador para manter o layout alinhado quando não tem nota */
-                    <div className="h-4 mb-3"></div>
-                  )}
-                  
-                  {mapa.tags && mapa.tags.length > 0 && (
-                    <div className="flex flex-wrap gap-2 mt-auto">
-                      {mapa.tags.map((tag, index) => (
-                        <span key={index} className="text-xs bg-neutral-800 text-neutral-300 px-2 py-1 rounded border border-neutral-700">
-                          {tag}
-                        </span>
-                      ))}
+                    <div className="p-4 flex flex-col flex-1">
+                      <h3 className="font-bold text-lg text-white mb-2 line-clamp-1 group-hover:text-zombies-115 transition-colors" title={mapa.nome}>
+                        {mapa.nome}
+                      </h3>
+                      {/* Sistema visual de estrelas (Só exibe se o mapa tiver nota) */}
+                      {mapa.nota ? (
+                        <div className="flex items-center gap-1 mb-3">
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <Star 
+                              key={star} 
+                              className={`w-4 h-4 ${
+                                mapa.nota && mapa.nota >= star 
+                                  ? 'text-yellow-500 fill-yellow-500' // Estrela preenchida
+                                  : 'text-neutral-700'                // Estrela vazia
+                              }`} 
+                            />
+                          ))}
+                        </div>
+                      ) : (
+                        /* Espaçador para manter o layout alinhado quando não tem nota */
+                        <div className="h-4 mb-3"></div>
+                      )}
+                      {mapa.tags && mapa.tags.length > 0 && (
+                        <div className="flex flex-wrap gap-2 mt-auto">
+                          {mapa.tags.map((tag, index) => (
+                            <span key={index} className="text-xs bg-neutral-800 text-neutral-300 px-2 py-1 rounded border border-neutral-700">
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
+                      )}
                     </div>
-                  )}
+                  </div>
+                ))}
                 </div>
-              </div>
-            ))}
-            
-            {!isLoading && mapasFiltrados.length === 0 && (
-              <div className="col-span-full flex flex-col items-center justify-center py-20 text-neutral-500">
-                <p className="text-lg">Nenhum mapa encontrado.</p>
-                {searchQuery ? (
-                  <p className="text-sm">Tente outro termo de busca.</p>
-                ) : (
-                  <p className="text-sm">Clique em "Novo Mapa" para começar seu acervo.</p>
+            ) : (
+                /* Layout de Lista */
+                <div className="flex flex-col gap-3">
+                  {mapasFiltrados.map((mapa) => (
+                    <div 
+                      key={mapa.id} 
+                      className="bg-zombies-surface rounded-lg border border-neutral-800 transition-all duration-200 hover:border-zombies-115 hover:bg-neutral-900/50 group flex items-center p-3 gap-4"
+                    >
+                      {/* Imagem Compacta */}
+                      <div className="w-32 h-20 bg-neutral-900 rounded overflow-hidden shrink-0 relative">
+                        {mapa.imagem_url ? (
+                          <img src={mapa.imagem_url} alt={mapa.nome} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+                        ) : (
+                          <div className="flex items-center justify-center w-full h-full text-neutral-600 text-xs">Sem Imagem</div>
+                        )}
+                      </div>
+
+                      {/* Textos Principais */}
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-bold text-white text-lg truncate group-hover:text-zombies-115 transition-colors">
+                          {mapa.nome}
+                        </h3>
+                        
+                        <div className="flex items-center gap-3 mt-1 text-sm">
+                          {mapa.nota && (
+                            <div className="flex items-center gap-1">
+                              {[1, 2, 3, 4, 5].map((star) => (
+                                <Star key={star} className={`w-3 h-3 ${mapa.nota && mapa.nota >= star ? 'text-yellow-500 fill-yellow-500' : 'text-neutral-700'}`} />
+                              ))}
+                            </div>
+                          )}
+                          
+                          <div className="flex gap-1 truncate text-neutral-400">
+                            {mapa.tags?.slice(0, 3).map((tag, i) => (
+                              <span key={i} className="bg-neutral-800/80 px-2 py-0.5 rounded text-xs border border-neutral-700">{tag}</span>
+                            ))}
+                            {mapa.tags && mapa.tags.length > 3 && (
+                              <span className="text-xs text-neutral-500">+{mapa.tags.length - 3}</span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Ações e Badges (Direita) */}
+                      <div className="flex items-center gap-4 shrink-0">
+                        <button 
+                          onClick={(e) => { e.preventDefault(); handleToggleStatus(mapa.id, mapa.status); }}
+                          className={`px-3 py-1.5 rounded text-xs font-bold uppercase tracking-wider border transition-all duration-200 hover:scale-105 active:scale-95 ${
+                            mapa.status === 'finalizado' ? 'bg-yellow-500/20 hover:bg-yellow-500/30 text-yellow-400 border-yellow-500/40' 
+                            : mapa.status === 'jogado' ? 'bg-green-500/20 hover:bg-green-500/30 text-green-400 border-green-500/40' 
+                            : 'bg-neutral-800/80 hover:bg-neutral-700/90 text-neutral-400 border-neutral-600'
+                          }`}
+                        >
+                          {mapa.status === 'finalizado' ? 'Finalizado' : mapa.status === 'jogado' ? 'Jogado' : 'Não Jogado'}
+                        </button>
+
+                        <div className="flex gap-2 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
+                          <button 
+                            onClick={(e) => { e.preventDefault(); setMapaEditando(mapa); setIsModalOpen(true); }}
+                            className="bg-neutral-800 hover:bg-blue-600 text-neutral-400 hover:text-white p-2 rounded transition-all border border-neutral-700 hover:border-blue-500"
+                          >
+                            <Edit2 className="w-4 h-4" />
+                          </button>
+                          <button 
+                            onClick={(e) => { e.preventDefault(); handleDeleteMapa(mapa.id, mapa.nome); }}
+                            className="bg-neutral-800 hover:bg-red-600 text-neutral-400 hover:text-white p-2 rounded transition-all border border-neutral-700 hover:border-red-500"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
                 )}
-              </div>
-            )}
-          </div>
+                {!isLoading && mapasFiltrados.length === 0 && (
+                  <div className="col-span-full flex flex-col items-center justify-center py-20 text-neutral-500">
+                    <p className="text-lg">Nenhum mapa encontrado.</p>
+                    {searchQuery ? (
+                      <p className="text-sm">Tente outro termo de busca.</p>
+                    ) : (
+                      <p className="text-sm">Clique em "Novo Mapa" para começar seu acervo.</p>
+                    )}
+                  </div>
+                )}
+          </>
         )}
       </main>
     </div>
