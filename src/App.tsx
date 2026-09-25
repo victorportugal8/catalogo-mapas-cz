@@ -17,6 +17,7 @@ function App() {
   // Estados para os filtros
   const [statusFilter, setStatusFilter] = useState('todos') // 'todos', 'jogado', 'nao-jogado'
   const [tagFilter, setTagFilter] = useState('todas') // 'todas' ou o nome da tag
+  const [sortFilter, setSortFilter] = useState('recentes') // 'recentes' ou 'antigos'
 
   // Função pura: apenas vai no Supabase e devolve os dados (não mexe nos states)
   const obterMapasDoBanco = async () => {
@@ -98,7 +99,31 @@ function App() {
 
     // O mapa só aparece se passar nos três testes
     return passaBuscaTexto && passaStatus && passaTag
-  })
+  }).sort((a, b) => {
+      // NOVO: Lógica de Ordenação
+      if (sortFilter === 'recentes') {
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      }
+      if (sortFilter === 'antigos') {
+        return new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+      }
+      if (sortFilter === 'az') {
+        return a.nome.localeCompare(b.nome)
+      }
+      if (sortFilter === 'za') {
+        return b.nome.localeCompare(a.nome)
+      }
+      if (sortFilter === 'maior-nota') {
+        return (b.nota || 0) - (a.nota || 0)
+      }
+      if (sortFilter === 'menor-nota') {
+        // Se o mapa não tem nota, jogamos para o final da lista para não atrapalhar
+        if (!a.nota) return 1
+        if (!b.nota) return -1
+        return a.nota - b.nota
+      }
+      return 0
+    })
 
   return (
     <div className="min-h-screen bg-zombies-background">
@@ -116,14 +141,28 @@ function App() {
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-8 gap-4">
           <h2 className="text-2xl font-semibold text-white flex items-center gap-2 whitespace-nowrap">
             Meus Mapas
-            {/* Atualizamos para mostrar mapasFiltrados.length */}
+            {/* Atualizado para mostrar mapasFiltrados.length */}
             <span className="text-sm bg-neutral-800 text-neutral-400 px-2 py-1 rounded-full">
               {mapasFiltrados.length}
             </span>
           </h2>
           
           {/* Container de Filtros e Busca */}
-          <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
+          <div className="flex flex-wrap gap-3 w-full lg:w-auto lg:justify-end">
+
+            {/* Dropdown de Ordenação */}
+            <select
+              value={sortFilter}
+              onChange={(e) => setSortFilter(e.target.value)}
+              className="bg-zombies-surface border border-neutral-700 rounded-md px-3 py-2 text-neutral-300 focus:outline-none focus:border-zombies-115 text-sm cursor-pointer"
+            >
+              <option value="az">Ordem Alfabética (A-Z)</option>
+              <option value="za">Ordem Alfabética (Z-A)</option>
+              <option value="maior-nota">Maior Nota</option>
+              <option value="menor-nota">Menor Nota</option>
+              <option value="recentes">Mais Recentes</option>
+              <option value="antigos">Mais Antigos</option>
+            </select>
             
             {/* Filtro de Tags */}
             <select
@@ -206,7 +245,7 @@ function App() {
                     <img 
                       src={mapa.imagem_url} 
                       alt={`Capa do mapa ${mapa.nome}`} 
-                      // Adicionamos transição de escala (zoom sutil) na imagem
+                      // Transição de escala (zoom sutil) na imagem
                       className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                     />
                   ) : (
