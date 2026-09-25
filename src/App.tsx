@@ -78,6 +78,32 @@ function App() {
     setMapas(mapas.filter(mapa => mapa.id !== id))
   }
 
+  const handleToggleStatus = async (id: string, statusAtual: string) => {
+    // Define qual é o próximo status no ciclo
+    let proximoStatus = 'nao_jogado'
+    if (statusAtual === 'nao_jogado') proximoStatus = 'jogado'
+    else if (statusAtual === 'jogado') proximoStatus = 'finalizado'
+    else if (statusAtual === 'finalizado') proximoStatus = 'nao_jogado'
+
+    // Atualiza a tela imediatamente (Optimistic UI)
+    setMapas(mapasAnteriores => 
+      mapasAnteriores.map(mapa => 
+        mapa.id === id ? { ...mapa, status: proximoStatus } : mapa
+      )
+    )
+
+    // Atualiza no banco de dados silenciosamente
+    const { error } = await supabase
+      .from('mapas')
+      .update({ status: proximoStatus })
+      .eq('id', id)
+
+    if (error) {
+      console.error('Erro ao atualizar status:', error)
+      alert('Erro ao atualizar o status no banco de dados.')
+    }
+  }
+
   // Filtra os mapas combinando busca de texto, status e tags
   const mapasFiltrados = mapas.filter((mapa) => {
     // Filtro de Texto (Nome ou Tag)
@@ -263,9 +289,9 @@ function App() {
                     {/* Botão de Editar */}
                     <button 
                       onClick={(e) => {
-                        e.preventDefault();
-                        setMapaEditando(mapa);
-                        setIsModalOpen(true);
+                        e.preventDefault()
+                        setMapaEditando(mapa)
+                        setIsModalOpen(true)
                       }}
                       className="bg-black/60 hover:bg-blue-600 text-neutral-400 hover:text-white p-1.5 rounded transition-all backdrop-blur-sm border border-neutral-700/50 hover:border-blue-500 opacity-100 lg:opacity-0 lg:group-hover:opacity-100"
                       title="Editar mapa"
@@ -285,16 +311,23 @@ function App() {
                       <Trash2 className="w-4 h-4" />
                     </button>
 
-                    {/* Badge de Status */}
-                    <div className={`px-2 py-1 rounded text-xs font-bold uppercase tracking-wider border backdrop-blur-sm ${
-                      mapa.status === 'finalizado' 
-                        ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' 
-                        : mapa.status === 'jogado' 
-                        ? 'bg-green-500/20 text-green-400 border-green-500/20' 
-                        : 'bg-neutral-800/80 text-neutral-400 border-neutral-700'
-                    }`}>
+                    {/* Badge de Status Interativa */}
+                    <button 
+                      onClick={(e) => {
+                        e.preventDefault()
+                        handleToggleStatus(mapa.id, mapa.status)
+                      }}
+                      className={`px-2 py-1 rounded text-xs font-bold uppercase tracking-wider border backdrop-blur-sm transition-all duration-200 hover:scale-105 active:scale-95 cursor-pointer shadow-lg ${
+                        mapa.status === 'finalizado' 
+                          ? 'bg-yellow-500/20 hover:bg-yellow-500/30 text-yellow-400 border-yellow-500/40' 
+                          : mapa.status === 'jogado' 
+                          ? 'bg-green-500/20 hover:bg-green-500/30 text-green-400 border-green-500/40' 
+                          : 'bg-neutral-800/80 hover:bg-neutral-700/90 text-neutral-400 border-neutral-600'
+                      }`}
+                      title="Clique para alterar o status"
+                    >
                       {mapa.status === 'finalizado' ? 'Finalizado' : mapa.status === 'jogado' ? 'Jogado' : 'Não Jogado'}
-                    </div>
+                    </button>
                     
                   </div>
                 </div>
