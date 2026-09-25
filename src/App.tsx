@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Header } from './components/Header'
 import { MapFormModal } from './components/MapFormModal'
-import { Search, Loader2, Trash2, Edit2 } from 'lucide-react'
+import { Search, Loader2, Trash2, Edit2, Star } from 'lucide-react'
 import { supabase } from './lib/supabase'
 import type { Mapa } from './types/'
 
@@ -13,6 +13,10 @@ function App() {
 
   // Gerenciamento do estado de busca
   const [searchQuery, setSearchQuery] = useState('')
+
+  // Estados para os filtros
+  const [statusFilter, setStatusFilter] = useState('todos') // 'todos', 'jogado', 'nao-jogado'
+  const [tagFilter, setTagFilter] = useState('todas') // 'todas' ou o nome da tag
 
   // Função pura: apenas vai no Supabase e devolve os dados (não mexe nos states)
   const obterMapasDoBanco = async () => {
@@ -35,6 +39,11 @@ function App() {
       setIsLoading(false)
     })
   }, [])
+
+  // Extrai todas as tags únicas de todos os mapas cadastrados
+  const todasAsTags = Array.from(
+    new Set(mapas.flatMap((mapa) => mapa.tags || []))
+  ).sort()
 
   // Atualização após fechar o modal
   const handleCloseModal = () => {
@@ -68,13 +77,27 @@ function App() {
     setMapas(mapas.filter(mapa => mapa.id !== id))
   }
 
-  // Filtragem de mapas com base na busca
+  // Filtra os mapas combinando busca de texto, status e tags
   const mapasFiltrados = mapas.filter((mapa) => {
+    // Filtro de Texto (Nome ou Tag)
     const termoBusca = searchQuery.toLowerCase()
     const nomeBate = mapa.nome.toLowerCase().includes(termoBusca)
     const tagBate = mapa.tags?.some(tag => tag.toLowerCase().includes(termoBusca))
-    
-    return nomeBate || tagBate
+    const passaBuscaTexto = nomeBate || tagBate
+
+    // Filtro de Status
+    let passaStatus = true
+    if (statusFilter === 'jogado') passaStatus = mapa.status === true
+    if (statusFilter === 'nao-jogado') passaStatus = mapa.status === false
+
+    // Filtro de Tag (Dropdown)
+    let passaTag = true
+    if (tagFilter !== 'todas') {
+      passaTag = mapa.tags?.includes(tagFilter) || false
+    }
+
+    // O mapa só aparece se passar nos três testes
+    return passaBuscaTexto && passaStatus && passaTag
   })
 
   return (
@@ -90,25 +113,54 @@ function App() {
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
-          <h2 className="text-2xl font-semibold text-white flex items-center gap-2">
+        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-8 gap-4">
+          <h2 className="text-2xl font-semibold text-white flex items-center gap-2 whitespace-nowrap">
             Meus Mapas
+            {/* Atualizamos para mostrar mapasFiltrados.length */}
             <span className="text-sm bg-neutral-800 text-neutral-400 px-2 py-1 rounded-full">
-              {mapas.length}
+              {mapasFiltrados.length}
             </span>
           </h2>
           
-          <div className="relative w-full sm:w-72">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Search className="h-5 w-5 text-neutral-500" />
+          {/* Container de Filtros e Busca */}
+          <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
+            
+            {/* Filtro de Tags */}
+            <select
+              value={tagFilter}
+              onChange={(e) => setTagFilter(e.target.value)}
+              className="bg-zombies-surface border border-neutral-700 rounded-md px-3 py-2 text-neutral-300 focus:outline-none focus:border-zombies-115 text-sm"
+            >
+              <option value="todas">Todas as Tags</option>
+              {todasAsTags.map(tag => (
+                <option key={tag} value={tag}>{tag}</option>
+              ))}
+            </select>
+
+            {/* Filtro de Status */}
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="bg-zombies-surface border border-neutral-700 rounded-md px-3 py-2 text-neutral-300 focus:outline-none focus:border-zombies-115 text-sm"
+            >
+              <option value="todos">Todos os Status</option>
+              <option value="jogado">Jogados</option>
+              <option value="nao-jogado">Não Jogados</option>
+            </select>
+
+            {/* Busca por Texto */}
+            <div className="relative w-full sm:w-64">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Search className="h-4 w-4 text-neutral-500" />
+              </div>
+              <input
+                type="text"
+                placeholder="Buscar por nome..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="block w-full pl-10 pr-3 py-2 border border-neutral-700 rounded-md leading-5 bg-zombies-surface text-neutral-300 placeholder-neutral-500 focus:outline-none focus:border-zombies-115 focus:ring-1 focus:ring-zombies-115 transition-colors text-sm"
+              />
             </div>
-            <input
-              type="text"
-              placeholder="Buscar mapa..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="block w-full pl-10 pr-3 py-2 border border-neutral-700 rounded-md leading-5 bg-zombies-surface text-neutral-300 placeholder-neutral-500 focus:outline-none focus:border-zombies-115 focus:ring-1 focus:ring-zombies-115 transition-colors"
-            />
           </div>
         </div>
 
@@ -178,6 +230,25 @@ function App() {
                   <h3 className="font-bold text-lg text-white mb-2 line-clamp-1 group-hover:text-zombies-115 transition-colors" title={mapa.nome}>
                     {mapa.nome}
                   </h3>
+
+                  {/* Sistema visual de estrelas (Só exibe se o mapa tiver nota) */}
+                  {mapa.nota ? (
+                    <div className="flex items-center gap-1 mb-3">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <Star 
+                          key={star} 
+                          className={`w-4 h-4 ${
+                            mapa.nota && mapa.nota >= star 
+                              ? 'text-yellow-500 fill-yellow-500' // Estrela preenchida
+                              : 'text-neutral-700'                // Estrela vazia
+                          }`} 
+                        />
+                      ))}
+                    </div>
+                  ) : (
+                    /* Espaçador para manter o layout alinhado quando não tem nota */
+                    <div className="h-4 mb-3"></div>
+                  )}
                   
                   {mapa.tags && mapa.tags.length > 0 && (
                     <div className="flex flex-wrap gap-2 mt-auto">
