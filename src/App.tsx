@@ -371,7 +371,17 @@ function App() {
                     </div>
                     <div className="p-4 flex flex-col flex-1">
                       <h3 className="font-bold text-lg text-white mb-2 line-clamp-1 group-hover:text-zombies-115 transition-colors" title={mapa.nome}>
-                        {mapa.nome}
+                        <a 
+                          href={mapa.link_workshop || '#'} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="hover:underline decoration-zombies-115 underline-offset-2"
+                          onClick={(e) => {
+                            if (!mapa.link_workshop) e.preventDefault();
+                          }}
+                        >
+                          {mapa.nome}
+                        </a>
                       </h3>
                       {/* Sistema visual de estrelas (Só exibe se o mapa tiver nota) */}
                       {mapa.nota ? (
@@ -435,7 +445,17 @@ function App() {
                       {/* Textos Principais */}
                       <div className="flex-1 min-w-0">
                         <h3 className="font-bold text-white text-lg truncate group-hover:text-zombies-115 transition-colors">
-                          {mapa.nome}
+                          <a 
+                            href={mapa.link_workshop || '#'} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="hover:underline decoration-zombies-115 underline-offset-2"
+                            onClick={(e) => {
+                              if (!mapa.link_workshop) e.preventDefault();
+                            }}
+                          >
+                            {mapa.nome}
+                          </a>
                         </h3>
                         
                         <div className="flex items-center gap-3 mt-1 text-sm">
