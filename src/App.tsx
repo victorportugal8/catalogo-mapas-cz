@@ -298,20 +298,33 @@ function App() {
                 {mapasFiltrados.map((mapa) => (
                   <div key={mapa.id} className="bg-zombies-surface rounded-lg overflow-hidden border border-neutral-800 transition-all duration-300 hover:-translate-y-1 hover:border-zombies-115 hover:shadow-[0_0_20px_rgba(0,255,255,0.15)] group cursor-pointer flex flex-col">
                     <div className="aspect-video bg-neutral-900 relative group/image overflow-hidden">
-                      {mapa.imagem_url ? (
-                        <img 
-                          src={mapa.imagem_url} 
-                          alt={`Capa do mapa ${mapa.nome}`} 
-                          // Transição de escala (zoom sutil) na imagem
-                          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                        />
-                      ) : (
-                        <div className="absolute inset-0 flex items-center justify-center text-neutral-600 text-sm">
-                          Sem imagem
-                        </div>
-                      )}
-                      {/* Gradiente de Proteção (vai escurecer suavemente o topo da imagem) */}
-                      <div className="absolute top-0 inset-x-0 h-24 bg-linear-to-b from-black/80 via-black/30 to-transparent pointer-events-none z-0" />                   
+                      {/* LINK PARA A WORKSHOP */}
+                      <a 
+                        href={mapa.link_workshop || '#'} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="block w-full h-full"
+                        title={mapa.link_workshop ? "Abrir na Steam Workshop" : "Link da Steam não cadastrado"}
+                        onClick={(e) => {
+                          // Se não houver link, cancela o clique
+                          if (!mapa.link_workshop) e.preventDefault();
+                        }}
+                      >
+                        {mapa.imagem_url ? (
+                          <img 
+                            src={mapa.imagem_url} 
+                            alt={`Capa do mapa ${mapa.nome}`} 
+                            // Transição de escala (zoom sutil) na imagem
+                            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                          />
+                        ) : (
+                          <div className="absolute inset-0 flex items-center justify-center text-neutral-600 text-sm">
+                            Sem imagem
+                          </div>
+                        )}
+                        {/* Gradiente de Proteção (vai escurecer suavemente o topo da imagem) */}
+                        <div className="absolute top-0 inset-x-0 h-24 bg-linear-to-b from-black/80 via-black/30 to-transparent pointer-events-none z-0" />
+                      </a>
                       {/* Container flex no canto superior direito para agrupar o botão e a badge */}
                       <div className="absolute top-2 right-2 flex gap-2 items-center z-10">
                         {/* Botão de Editar */}
@@ -401,11 +414,22 @@ function App() {
                     >
                       {/* Imagem Compacta */}
                       <div className="w-32 h-20 bg-neutral-900 rounded overflow-hidden shrink-0 relative">
-                        {mapa.imagem_url ? (
-                          <img src={mapa.imagem_url} alt={mapa.nome} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
-                        ) : (
-                          <div className="flex items-center justify-center w-full h-full text-neutral-600 text-xs">Sem Imagem</div>
-                        )}
+                        <a 
+                          href={mapa.link_workshop || '#'} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="block w-full h-full"
+                          title={mapa.link_workshop ? "Abrir na Steam Workshop" : "Link da Steam não cadastrado"}
+                          onClick={(e) => {
+                            if (!mapa.link_workshop) e.preventDefault();
+                          }}
+                        >
+                          {mapa.imagem_url ? (
+                            <img src={mapa.imagem_url} alt={mapa.nome} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+                          ) : (
+                            <div className="flex items-center justify-center w-full h-full text-neutral-600 text-xs">Sem Imagem</div>
+                          )}
+                        </a>
                       </div>
 
                       {/* Textos Principais */}
