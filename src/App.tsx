@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Header } from './components/Header'
 import { MapFormModal } from './components/MapFormModal'
-import { Search, Trash2, Edit2, Star, LayoutGrid, List as ListIcon } from 'lucide-react'
+import { Search, Trash2, Edit2, Star, LayoutGrid, List as ListIcon, Skull } from 'lucide-react'
 import { supabase } from './lib/supabase'
 import type { Mapa } from './types/'
 
@@ -133,7 +133,7 @@ function App() {
     // O mapa só aparece se passar nos três testes
     return passaBuscaTexto && passaStatus && passaTag
   }).sort((a, b) => {
-      // NOVO: Lógica de Ordenação
+      // Lógica de Ordenação
       if (sortFilter === 'recentes') {
         return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
       }
@@ -466,16 +466,25 @@ function App() {
                   ))}
                 </div>
                 )}
-                {!isLoading && mapasFiltrados.length === 0 && (
-                  <div className="col-span-full flex flex-col items-center justify-center py-20 text-neutral-500">
-                    <p className="text-lg">Nenhum mapa encontrado.</p>
-                    {searchQuery ? (
-                      <p className="text-sm">Tente outro termo de busca.</p>
-                    ) : (
-                      <p className="text-sm">Clique em "Novo Mapa" para começar seu acervo.</p>
-                    )}
+              {!isLoading && mapasFiltrados.length === 0 && (
+                <div className="col-span-full flex flex-col items-center justify-center py-24 px-4 text-center bg-zombies-surface/30 rounded-xl border-2 border-dashed border-neutral-800 mt-4">
+                  <div className="w-20 h-20 bg-neutral-900 rounded-full flex items-center justify-center mb-5 shadow-inner border border-neutral-800/50">
+                    <Skull className="w-10 h-10 text-neutral-500 animate-pulse" />
                   </div>
-                )}
+                  <h3 className="text-xl font-bold text-neutral-300 mb-2">
+                    Nenhum mapa sobreviveu
+                  </h3>
+                  {searchQuery || statusFilter !== 'todos' || tagFilter !== 'todas' ? (
+                    <p className="text-neutral-500 max-w-md">
+                      A horda levou tudo. Não encontramos nenhum mapa correspondente aos filtros ou ao termo <span className="text-zombies-115 font-medium">"{searchQuery}"</span>.
+                    </p>
+                  ) : (
+                    <p className="text-neutral-500 max-w-md">
+                      Seu catálogo está completamente vazio. Clique em <span className="text-neutral-300 font-medium">"Novo Mapa"</span> para começar a documentar sua sobrevivência.
+                    </p>
+                  )}
+                </div>
+              )}
           </>
         )}
       </main>
