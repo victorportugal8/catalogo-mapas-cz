@@ -1,15 +1,17 @@
 import { useState, useEffect } from 'react'
 import { Header } from './components/Header'
 import { MapFormModal } from './components/MapFormModal'
-import { Search, Trash2, Edit2, Star, LayoutGrid, List as ListIcon, Skull, Map, CheckCircle, Gamepad2, Target } from 'lucide-react'
+import { Search, Trash2, Edit2, Star, LayoutGrid, List as ListIcon, Skull, Map, CheckCircle, Gamepad2, Target, History as HistoryIcon } from 'lucide-react'
 import { supabase } from './lib/supabase'
 import type { Mapa } from './types/'
+import { HistoricoModal } from './components/HistoricoModal'
 
 function App() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [mapas, setMapas] = useState<Mapa[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [mapaEditando, setMapaEditando] = useState<Mapa | null>(null)
+  const [mapaHistorico, setMapaHistorico] = useState<Mapa | null>(null)
 
   // Gerenciamento do estado de busca
   const [searchQuery, setSearchQuery] = useState('')
@@ -174,6 +176,14 @@ function App() {
         isOpen={isModalOpen} 
         onClose={handleCloseModal} 
         mapaParaEditar={mapaEditando}
+      />
+
+      {/* Modal de Histórico */}
+      <HistoricoModal
+        key={mapaHistorico ? `historico-${mapaHistorico.id}` : 'historico-fechado'}
+        isOpen={mapaHistorico !== null}
+        onClose={() => setMapaHistorico(null)}
+        mapa={mapaHistorico}
       />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -399,6 +409,17 @@ function App() {
                       </a>
                       {/* Container flex no canto superior direito para agrupar o botão e a badge */}
                       <div className="absolute top-2 right-2 flex gap-2 items-center z-10">
+                        {/* Botão de Histórico */}
+                        <button 
+                          onClick={(e) => {
+                            e.preventDefault()
+                            setMapaHistorico(mapa)
+                          }}
+                          className="bg-black/60 hover:bg-purple-600 text-neutral-400 hover:text-white p-1.5 rounded transition-all backdrop-blur-sm border border-neutral-700/50 hover:border-purple-500 opacity-100 lg:opacity-0 lg:group-hover:opacity-100"
+                          title="Ver histórico de partidas"
+                        >
+                          <HistoryIcon className="w-4 h-4" />
+                        </button>
                         {/* Botão de Editar */}
                         <button 
                           onClick={(e) => {
@@ -564,6 +585,17 @@ function App() {
                         </button>
 
                         <div className="flex gap-2 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
+                          {/* Botão de Histórico */}
+                          <button 
+                            onClick={(e) => {
+                              e.preventDefault()
+                              setMapaHistorico(mapa)
+                            }}
+                            className="bg-neutral-800 hover:bg-purple-600 text-neutral-400 hover:text-white p-1.5 rounded transition-all backdrop-blur-sm border border-neutral-700/50 hover:border-purple-500 opacity-100 lg:opacity-0 lg:group-hover:opacity-100"
+                            title="Ver histórico de partidas"
+                          >
+                            <HistoryIcon className="w-4 h-4" />
+                          </button>
                           <button 
                             onClick={(e) => { e.preventDefault(); setMapaEditando(mapa); setIsModalOpen(true); }}
                             className="bg-neutral-800 hover:bg-blue-600 text-neutral-400 hover:text-white p-2 rounded transition-all border border-neutral-700 hover:border-blue-500"
