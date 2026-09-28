@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Header } from './components/Header'
 import { MapFormModal } from './components/MapFormModal'
-import { Search, Trash2, Edit2, Star, LayoutGrid, List as ListIcon, Skull } from 'lucide-react'
+import { Search, Trash2, Edit2, Star, LayoutGrid, List as ListIcon, Skull, Map, CheckCircle, Gamepad2, Target } from 'lucide-react'
 import { supabase } from './lib/supabase'
 import type { Mapa } from './types/'
 
@@ -158,6 +158,13 @@ function App() {
       return 0
     })
 
+    // Cálculos do Dashboard (usando 'mapas' para mostrar o total do banco)
+  const totalMapas = mapas.length
+  const totalFinalizados = mapas.filter(m => m.status === 'finalizado').length
+  const totalJogados = mapas.filter(m => m.status === 'jogado').length
+  // A taxa de conclusão protege contra divisão por zero se o banco estiver vazio
+  const taxaConclusao = totalMapas > 0 ? Math.round((totalFinalizados / totalMapas) * 100) : 0
+
   return (
     <div className="min-h-screen bg-zombies-background">
       <Header onNewMap={() => { setMapaEditando(null); setIsModalOpen(true); }} />
@@ -170,6 +177,71 @@ function App() {
       />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* DASHBOARD DE ESTATÍSTICAS */}
+        {!isLoading && totalMapas > 0 && (
+          <div className="bg-zombies-surface border border-neutral-800 rounded-xl p-4 sm:p-6 mb-8 shadow-lg">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+              
+              {/* Card 1: Total */}
+              <div className="bg-neutral-900/50 p-4 rounded-lg border border-neutral-800 flex items-center gap-4">
+                <div className="p-3 bg-blue-500/10 text-blue-400 rounded-full hidden sm:block">
+                  <Map className="w-6 h-6" />
+                </div>
+                <div>
+                  <p className="text-sm text-neutral-400">Total de Mapas</p>
+                  <p className="text-2xl font-bold text-white">{totalMapas}</p>
+                </div>
+              </div>
+
+              {/* Card 2: Finalizados */}
+              <div className="bg-neutral-900/50 p-4 rounded-lg border border-neutral-800 flex items-center gap-4">
+                <div className="p-3 bg-yellow-500/10 text-yellow-400 rounded-full hidden sm:block">
+                  <CheckCircle className="w-6 h-6" />
+                </div>
+                <div>
+                  <p className="text-sm text-neutral-400">Finalizados</p>
+                  <p className="text-2xl font-bold text-white">{totalFinalizados}</p>
+                </div>
+              </div>
+
+              {/* Card 3: Jogados */}
+              <div className="bg-neutral-900/50 p-4 rounded-lg border border-neutral-800 flex items-center gap-4">
+                <div className="p-3 bg-green-500/10 text-green-400 rounded-full hidden sm:block">
+                  <Gamepad2 className="w-6 h-6" />
+                </div>
+                <div>
+                  <p className="text-sm text-neutral-400">Jogados</p>
+                  <p className="text-2xl font-bold text-white">{totalJogados}</p>
+                </div>
+              </div>
+
+              {/* Card 4: Taxa de Conclusão */}
+              <div className="bg-neutral-900/50 p-4 rounded-lg border border-neutral-800 flex items-center gap-4">
+                <div className="p-3 bg-zombies-115/10 text-zombies-115 rounded-full hidden sm:block">
+                  <Target className="w-6 h-6" />
+                </div>
+                <div>
+                  <p className="text-sm text-neutral-400">Conclusão</p>
+                  <p className="text-2xl font-bold text-white">{taxaConclusao}%</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Barra de Progresso Geral */}
+            <div>
+              <div className="flex justify-between text-xs mb-2">
+                <span className="text-neutral-400 uppercase tracking-wider font-semibold">Progresso da Jornada</span>
+                <span className="text-zombies-115 font-bold">{taxaConclusao}%</span>
+              </div>
+              <div className="w-full bg-neutral-900 rounded-full h-2.5 border border-neutral-800 overflow-hidden shadow-inner">
+                <div 
+                  className="bg-zombies-115 h-2.5 rounded-full transition-all duration-1000 ease-out" 
+                  style={{ width: `${taxaConclusao}%` }}
+                ></div>
+              </div>
+            </div>
+          </div>
+        )}
         
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-8 gap-4">
           <h2 className="text-2xl font-semibold text-white flex items-center gap-2 whitespace-nowrap">
