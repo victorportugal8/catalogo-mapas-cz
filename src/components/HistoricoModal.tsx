@@ -3,6 +3,17 @@ import { X, Save, History as HistoryIcon, Trash2, Loader2 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import type { Mapa, Historico } from '../types'
 
+// Função para colorir o resultado dinamicamente com base em palavras-chave
+const obterCorDoResultado = (texto: string) => {
+  const t = texto.toLowerCase()
+  
+  if (t.includes('game over') || t.includes('morte') || t.includes('morremos') || t.includes('derrota')) return 'text-red-400'
+  if (t.includes('easter egg') || t.includes('completo') || t.includes('vitoria') || t.includes('zerado')) return 'text-green-400'
+  if (t.includes('crash') || t.includes('bug') || t.includes('quit') || t.includes('desconectou')) return 'text-yellow-400'
+  
+  return 'text-white' // Cor padrão se não encontrar palavras-chave conhecidas
+}
+
 interface HistoricoModalProps {
   isOpen: boolean
   onClose: () => void
@@ -231,7 +242,7 @@ export function HistoricoModal({ isOpen, onClose, mapa }: HistoricoModalProps) {
                       </div>
                       
                       {registro.resultado && (
-                        <p className="text-white font-medium text-lg mb-1">{registro.resultado}</p>
+                        <p className={`font-bold text-lg mb-1 ${obterCorDoResultado(registro.resultado)}`}>{registro.resultado}</p>
                       )}
                       
                       {registro.jogadores && (
