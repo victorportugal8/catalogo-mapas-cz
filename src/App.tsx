@@ -183,7 +183,7 @@ function App() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
               
               {/* Card 1: Total */}
-              <div className="bg-neutral-900/50 p-4 rounded-lg border border-neutral-800 flex items-center gap-4">
+              <div onClick={() => setStatusFilter('todos')} className="bg-neutral-900/50 p-4 rounded-lg border border-neutral-800 flex items-center gap-4 cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:bg-neutral-800 hover:border-blue-500 hover:shadow-[0_0_15px_rgba(59,130,246,0.15)] group" title="Ver todos os mapas">
                 <div className="p-3 bg-blue-500/10 text-blue-400 rounded-full hidden sm:block">
                   <Map className="w-6 h-6" />
                 </div>
@@ -194,7 +194,7 @@ function App() {
               </div>
 
               {/* Card 2: Finalizados */}
-              <div className="bg-neutral-900/50 p-4 rounded-lg border border-neutral-800 flex items-center gap-4">
+              <div onClick={() => setStatusFilter('finalizado')} className="bg-neutral-900/50 p-4 rounded-lg border border-neutral-800 flex items-center gap-4 cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:bg-neutral-800 hover:border-yellow-500 hover:shadow-[0_0_15px_rgba(234,179,8,0.15)] group" title="Ver mapas finalizados">
                 <div className="p-3 bg-yellow-500/10 text-yellow-400 rounded-full hidden sm:block">
                   <CheckCircle className="w-6 h-6" />
                 </div>
@@ -205,7 +205,7 @@ function App() {
               </div>
 
               {/* Card 3: Jogados */}
-              <div className="bg-neutral-900/50 p-4 rounded-lg border border-neutral-800 flex items-center gap-4">
+              <div onClick={() => setStatusFilter('jogado')} className="bg-neutral-900/50 p-4 rounded-lg border border-neutral-800 flex items-center gap-4 cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:bg-neutral-800 hover:border-green-500 hover:shadow-[0_0_15px_rgba(34,197,94,0.15)] group" title="Ver mapas jogados">
                 <div className="p-3 bg-green-500/10 text-green-400 rounded-full hidden sm:block">
                   <Gamepad2 className="w-6 h-6" />
                 </div>
