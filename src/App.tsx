@@ -591,7 +591,7 @@ function App() {
                               e.preventDefault()
                               setMapaHistorico(mapa)
                             }}
-                            className="bg-neutral-800 hover:bg-purple-600 text-neutral-400 hover:text-white p-1.5 rounded transition-all backdrop-blur-sm border border-neutral-700/50 hover:border-purple-500 opacity-100 lg:opacity-0 lg:group-hover:opacity-100"
+                            className="bg-neutral-800 hover:bg-purple-600 text-neutral-400 hover:text-white p-2 rounded transition-all border border-neutral-700 hover:border-purple-500"
                             title="Ver histórico de partidas"
                           >
                             <HistoryIcon className="w-4 h-4" />
