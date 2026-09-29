@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { X, Save, History as HistoryIcon, Trash2, Loader2 } from 'lucide-react'
+import { X, Save, History as HistoryIcon, Trash2, Loader2, Trophy, Calendar, Hash } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import type { Mapa, Historico } from '../types'
 
@@ -64,9 +64,17 @@ export function HistoricoModal({ isOpen, onClose, mapa }: HistoricoModalProps) {
     if (!error) setHistoricoLista(prev => prev.filter(item => item.id !== id))
   }
 
+  // Cálculos do Mini-Dashboard
+  const totalPartidas = historicoLista.length
+  // Extrai apenas os rounds que foram preenchidos (ignora nulos)
+  const roundsValidos = historicoLista.map(h => h.round_alcancado).filter(r => r !== null) as number[]
+  const maiorRound = roundsValidos.length > 0 ? Math.max(...roundsValidos) : 0
+  // A busca do Supabase já vem ordenada da mais recente para a mais antiga, então o índice [0] é sempre a última jogada.
+  const ultimaPartida = totalPartidas > 0 ? new Date(historicoLista[0].data_partida).toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : 'Nunca'
+
   if (!isOpen || !mapa) return null
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault()
     setIsSubmitting(true)
 
@@ -212,6 +220,46 @@ export function HistoricoModal({ isOpen, onClose, mapa }: HistoricoModalProps) {
               </button>
             </div>
           </form>
+          {/* Mini-Dashboard de Estatísticas do Mapa */}
+          {!isLoadingLista && totalPartidas > 0 && (
+            <div className="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-4">
+              
+              {/* Card: Total de Partidas */}
+              <div className="bg-neutral-900/80 border border-neutral-800 rounded-lg p-4 flex items-center gap-3 shadow-inner">
+                <div className="p-2 bg-blue-500/10 text-blue-400 rounded-lg">
+                  <Hash className="w-5 h-5" />
+                </div>
+                <div>
+                  <p className="text-xs text-neutral-400 uppercase tracking-wider font-semibold">Partidas Jogadas</p>
+                  <p className="text-xl font-bold text-white">{totalPartidas}</p>
+                </div>
+              </div>
+
+              {/* Card: Maior Round */}
+              <div className="bg-neutral-900/80 border border-neutral-800 rounded-lg p-4 flex items-center gap-3 shadow-inner">
+                <div className="p-2 bg-yellow-500/10 text-yellow-400 rounded-lg">
+                  <Trophy className="w-5 h-5" />
+                </div>
+                <div>
+                  <p className="text-xs text-neutral-400 uppercase tracking-wider font-semibold">Maior Round</p>
+                  <p className="text-xl font-bold text-white">{maiorRound > 0 ? maiorRound : '-'}</p>
+                </div>
+              </div>
+
+              {/* Card: Última Partida */}
+              <div className="bg-neutral-900/80 border border-neutral-800 rounded-lg p-4 flex items-center gap-3 shadow-inner">
+                <div className="p-2 bg-green-500/10 text-green-400 rounded-lg">
+                  <Calendar className="w-5 h-5" />
+                </div>
+                <div>
+                  <p className="text-xs text-neutral-400 uppercase tracking-wider font-semibold">Última Partida</p>
+                  <p className="text-sm font-bold text-white">{ultimaPartida}</p>
+                </div>
+              </div>
+
+            </div>
+          )}
+
           {/* Linha do Tempo / Lista de Partidas */}
           <div className="mt-8 pt-8 border-t-2 border-dashed border-neutral-800">
             <h3 className="text-lg font-bold text-white mb-4">Partidas Anteriores</h3>
