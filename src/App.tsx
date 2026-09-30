@@ -1,13 +1,31 @@
 import { useState, useEffect } from 'react'
-import { Header } from './components/Header'
-import { MapFormModal } from './components/MapFormModal'
 import { Search, Trash2, Edit2, Star, LayoutGrid, List as ListIcon, Skull, Map, CheckCircle, Gamepad2, Target, History as HistoryIcon } from 'lucide-react'
 import { supabase } from './lib/supabase'
+import type { User } from '@supabase/supabase-js'
 import type { Mapa } from './types/'
+import { AuthModal } from './components/AuthModal'
+import { Header } from './components/Header'
+import { MapFormModal } from './components/MapFormModal'
 import { HistoricoModal } from './components/HistoricoModal'
 
 function App() {
   const [isModalOpen, setIsModalOpen] = useState(false)
+  // Estados de autenticação
+  const [user, setUser] = useState<User | null>(null)
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
+
+  // Verifica a sessão ativa e escuta mudanças de login/logout
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null)
+    })
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null)
+    })
+
+    return () => subscription.unsubscribe()
+  }, [])
   const [mapas, setMapas] = useState<Mapa[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [mapaEditando, setMapaEditando] = useState<Mapa | null>(null)
@@ -169,7 +187,12 @@ function App() {
 
   return (
     <div className="min-h-screen bg-zombies-background">
-      <Header onNewMap={() => { setMapaEditando(null); setIsModalOpen(true); }} />
+      <Header
+        onNewMap={() => { setMapaEditando(null); setIsModalOpen(true); }}
+        onLogin={() => setIsAuthModalOpen(true)}
+        onLogout={async () => await supabase.auth.signOut()}
+        user={user}
+      />
 
       <MapFormModal 
         key={isModalOpen ? (mapaEditando ? mapaEditando.id : 'novo-mapa') : 'fechado'}
@@ -184,6 +207,13 @@ function App() {
         isOpen={mapaHistorico !== null}
         onClose={() => setMapaHistorico(null)}
         mapa={mapaHistorico}
+        user={user}
+      />
+
+      {/* Renderiza o modal de Autenticação */}
+      <AuthModal 
+        isOpen={isAuthModalOpen} 
+        onClose={() => setIsAuthModalOpen(false)} 
       />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -420,34 +450,39 @@ function App() {
                         >
                           <HistoryIcon className="w-4 h-4" />
                         </button>
-                        {/* Botão de Editar */}
-                        <button 
-                          onClick={(e) => {
-                            e.preventDefault()
-                            setMapaEditando(mapa)
-                            setIsModalOpen(true)
-                          }}
-                          className="bg-black/60 hover:bg-blue-600 text-neutral-400 hover:text-white p-1.5 rounded transition-all backdrop-blur-sm border border-neutral-700/50 hover:border-blue-500 opacity-100 lg:opacity-0 lg:group-hover:opacity-100"
-                          title="Editar mapa"
-                        >
-                          <Edit2 className="w-4 h-4" />
-                        </button>
-                        {/* Botão de Excluir */}
-                        <button 
-                          onClick={(e) => {
-                            e.preventDefault(); // Evita conflitos de clique
-                            handleDeleteMapa(mapa.id, mapa.nome);
-                          }}
-                          className="bg-black/60 hover:bg-red-600 text-neutral-400 hover:text-white p-1.5 rounded transition-all backdrop-blur-sm border border-neutral-700/50 hover:border-red-500 opacity-100 lg:opacity-0 lg:group-hover:opacity-100"
-                          title="Excluir mapa"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                        {/* Ações restritas ao Admin */}
+                        {user && (
+                          <>
+                            {/* Botão de Editar */}
+                            <button 
+                              onClick={(e) => {
+                                e.preventDefault()
+                                setMapaEditando(mapa)
+                                setIsModalOpen(true)
+                              }}
+                              className="bg-black/60 hover:bg-blue-600 text-neutral-400 hover:text-white p-1.5 rounded transition-all backdrop-blur-sm border border-neutral-700/50 hover:border-blue-500 opacity-100 lg:opacity-0 lg:group-hover:opacity-100"
+                              title="Editar mapa"
+                            >
+                              <Edit2 className="w-4 h-4" />
+                            </button>
+                            {/* Botão de Excluir */}
+                            <button 
+                              onClick={(e) => {
+                                e.preventDefault(); // Evita conflitos de clique
+                                handleDeleteMapa(mapa.id, mapa.nome);
+                              }}
+                              className="bg-black/60 hover:bg-red-600 text-neutral-400 hover:text-white p-1.5 rounded transition-all backdrop-blur-sm border border-neutral-700/50 hover:border-red-500 opacity-100 lg:opacity-0 lg:group-hover:opacity-100"
+                              title="Excluir mapa"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </>
+                        )}
                         {/* Badge de Status Interativa */}
                         <button 
                           onClick={(e) => {
                             e.preventDefault()
-                            handleToggleStatus(mapa.id, mapa.status)
+                            if (user) handleToggleStatus(mapa.id, mapa.status)
                           }}
                           className={`px-2 py-1 rounded text-xs font-bold uppercase tracking-wider border backdrop-blur-sm transition-all duration-200 hover:scale-105 active:scale-95 cursor-pointer shadow-lg ${
                             mapa.status === 'finalizado' 
@@ -574,7 +609,7 @@ function App() {
                       {/* Ações e Badges (Direita) */}
                       <div className="flex items-center gap-4 shrink-0">
                         <button 
-                          onClick={(e) => { e.preventDefault(); handleToggleStatus(mapa.id, mapa.status); }}
+                          onClick={(e) => { e.preventDefault(); if (user) handleToggleStatus(mapa.id, mapa.status); }}
                           className={`px-3 py-1.5 rounded text-xs font-bold uppercase tracking-wider border transition-all duration-200 hover:scale-105 active:scale-95 ${
                             mapa.status === 'finalizado' ? 'bg-yellow-500/20 hover:bg-yellow-500/30 text-yellow-400 border-yellow-500/40' 
                             : mapa.status === 'jogado' ? 'bg-green-500/20 hover:bg-green-500/30 text-green-400 border-green-500/40' 
@@ -596,18 +631,25 @@ function App() {
                           >
                             <HistoryIcon className="w-4 h-4" />
                           </button>
-                          <button 
-                            onClick={(e) => { e.preventDefault(); setMapaEditando(mapa); setIsModalOpen(true); }}
-                            className="bg-neutral-800 hover:bg-blue-600 text-neutral-400 hover:text-white p-2 rounded transition-all border border-neutral-700 hover:border-blue-500"
-                          >
-                            <Edit2 className="w-4 h-4" />
-                          </button>
-                          <button 
-                            onClick={(e) => { e.preventDefault(); handleDeleteMapa(mapa.id, mapa.nome); }}
-                            className="bg-neutral-800 hover:bg-red-600 text-neutral-400 hover:text-white p-2 rounded transition-all border border-neutral-700 hover:border-red-500"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
+                          {/* Ações restritas ao Admin */}
+                          {user && (
+                            <>
+                              {/* Botão de Editar */}
+                              <button 
+                                onClick={(e) => { e.preventDefault(); setMapaEditando(mapa); setIsModalOpen(true); }}
+                                className="bg-neutral-800 hover:bg-blue-600 text-neutral-400 hover:text-white p-2 rounded transition-all border border-neutral-700 hover:border-blue-500"
+                              >
+                                <Edit2 className="w-4 h-4" />
+                              </button>
+                              {/* Botão de Excluir */}
+                              <button 
+                                onClick={(e) => { e.preventDefault(); handleDeleteMapa(mapa.id, mapa.nome); }}
+                                className="bg-neutral-800 hover:bg-red-600 text-neutral-400 hover:text-white p-2 rounded transition-all border border-neutral-700 hover:border-red-500"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </>
+                          )}
                         </div>
                       </div>
                     </div>

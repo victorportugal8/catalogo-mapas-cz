@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { X, Save, History as HistoryIcon, Trash2, Loader2, Trophy, Calendar, Hash } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import type { Mapa, Historico } from '../types'
+import type { User } from '@supabase/supabase-js'
 
 // Função para colorir o resultado dinamicamente com base em palavras-chave
 const obterCorDoResultado = (texto: string) => {
@@ -18,9 +19,10 @@ interface HistoricoModalProps {
   isOpen: boolean
   onClose: () => void
   mapa: Mapa | null
+  user: User | null
 }
 
-export function HistoricoModal({ isOpen, onClose, mapa }: HistoricoModalProps) {
+export function HistoricoModal({ isOpen, onClose, mapa, user }: HistoricoModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   // Estados da lista de histórico
@@ -132,94 +134,100 @@ export function HistoricoModal({ isOpen, onClose, mapa }: HistoricoModalProps) {
 
         {/* Corpo do Modal (Formulário) */}
         <div className="p-6">
-          <form onSubmit={handleSubmit} className="space-y-4">
-            
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {/* Data da Partida */}
-              <div>
-                <label className="block text-sm font-medium text-neutral-300 mb-1">Data da Partida</label>
-                <input 
-                  type="date"
-                  required
-                  value={dataPartida}
-                  onChange={(e) => setDataPartida(e.target.value)}
-                  className="w-full bg-neutral-900 border border-neutral-700 rounded-md px-3 py-2 text-white focus:outline-none focus:border-zombies-115"
-                />
+          {user ? (
+            <form onSubmit={handleSubmit} className="space-y-4">
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* Data da Partida */}
+                <div>
+                  <label className="block text-sm font-medium text-neutral-300 mb-1">Data da Partida</label>
+                  <input 
+                    type="date"
+                    required
+                    value={dataPartida}
+                    onChange={(e) => setDataPartida(e.target.value)}
+                    className="w-full bg-neutral-900 border border-neutral-700 rounded-md px-3 py-2 text-white focus:outline-none focus:border-zombies-115"
+                  />
+                </div>
+
+                {/* Round Alcançado */}
+                <div>
+                  <label className="block text-sm font-medium text-neutral-300 mb-1">Round Alcançado</label>
+                  <input 
+                    type="number"
+                    min="1"
+                    placeholder="Ex: 35"
+                    value={roundAlcancado}
+                    onChange={(e) => setRoundAlcancado(e.target.value)}
+                    className="w-full bg-neutral-900 border border-neutral-700 rounded-md px-3 py-2 text-white focus:outline-none focus:border-zombies-115 placeholder-neutral-600"
+                  />
+                </div>
               </div>
 
-              {/* Round Alcançado */}
+              {/* Jogadores (Campo de texto simples) */}
               <div>
-                <label className="block text-sm font-medium text-neutral-300 mb-1">Round Alcançado</label>
+                <label className="block text-sm font-medium text-neutral-300 mb-1">Esquadrão (Jogadores)</label>
                 <input 
-                  type="number"
-                  min="1"
-                  placeholder="Ex: 35"
-                  value={roundAlcancado}
-                  onChange={(e) => setRoundAlcancado(e.target.value)}
+                  type="text"
+                  placeholder="Ex: Eu, Gabriel, Lucas"
+                  value={jogadores}
+                  onChange={(e) => setJogadores(e.target.value)}
                   className="w-full bg-neutral-900 border border-neutral-700 rounded-md px-3 py-2 text-white focus:outline-none focus:border-zombies-115 placeholder-neutral-600"
                 />
               </div>
-            </div>
 
-            {/* Jogadores (Campo de texto simples) */}
-            <div>
-              <label className="block text-sm font-medium text-neutral-300 mb-1">Esquadrão (Jogadores)</label>
-              <input 
-                type="text"
-                placeholder="Ex: Eu, Gabriel, Lucas"
-                value={jogadores}
-                onChange={(e) => setJogadores(e.target.value)}
-                className="w-full bg-neutral-900 border border-neutral-700 rounded-md px-3 py-2 text-white focus:outline-none focus:border-zombies-115 placeholder-neutral-600"
-              />
-            </div>
+              {/* Resultado */}
+              <div>
+                <label className="block text-sm font-medium text-neutral-300 mb-1">Resultado da Missão</label>
+                <input 
+                  type="text"
+                  placeholder="Ex: Game Over, Easter Egg Completo, Crash no servidor..."
+                  value={resultado}
+                  onChange={(e) => setResultado(e.target.value)}
+                  className="w-full bg-neutral-900 border border-neutral-700 rounded-md px-3 py-2 text-white focus:outline-none focus:border-zombies-115 placeholder-neutral-600"
+                />
+              </div>
 
-            {/* Resultado */}
-            <div>
-              <label className="block text-sm font-medium text-neutral-300 mb-1">Resultado da Missão</label>
-              <input 
-                type="text"
-                placeholder="Ex: Game Over, Easter Egg Completo, Crash no servidor..."
-                value={resultado}
-                onChange={(e) => setResultado(e.target.value)}
-                className="w-full bg-neutral-900 border border-neutral-700 rounded-md px-3 py-2 text-white focus:outline-none focus:border-zombies-115 placeholder-neutral-600"
-              />
-            </div>
+              {/* Observações */}
+              <div>
+                <label className="block text-sm font-medium text-neutral-300 mb-1">Observações (Opcional)</label>
+                <textarea 
+                  rows={3}
+                  placeholder="Detalhes da partida, táticas usadas, onde morreram..."
+                  value={observacoes}
+                  onChange={(e) => setObservacoes(e.target.value)}
+                  className="w-full bg-neutral-900 border border-neutral-700 rounded-md px-3 py-2 text-white focus:outline-none focus:border-zombies-115 placeholder-neutral-600 resize-none"
+                />
+              </div>
 
-            {/* Observações */}
-            <div>
-              <label className="block text-sm font-medium text-neutral-300 mb-1">Observações (Opcional)</label>
-              <textarea 
-                rows={3}
-                placeholder="Detalhes da partida, táticas usadas, onde morreram..."
-                value={observacoes}
-                onChange={(e) => setObservacoes(e.target.value)}
-                className="w-full bg-neutral-900 border border-neutral-700 rounded-md px-3 py-2 text-white focus:outline-none focus:border-zombies-115 placeholder-neutral-600 resize-none"
-              />
+              {/* Botões de Ação */}
+              <div className="flex justify-end gap-3 pt-4 border-t border-neutral-800 mt-6">
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="px-4 py-2 rounded-md text-neutral-300 hover:text-white hover:bg-neutral-800 transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="bg-zombies-115 text-black font-bold px-6 py-2 rounded-md hover:bg-cyan-400 transition-colors flex items-center gap-2 disabled:opacity-50"
+                >
+                  {isSubmitting ? 'Salvando...' : (
+                    <>
+                      <Save className="w-4 h-4" />
+                      Registrar Partida
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          ) : (
+            <div className="bg-neutral-900/50 border border-neutral-800 rounded-lg p-6 text-center text-neutral-400">
+              Você está no modo de visualização. Faça login como administrador para registrar novas partidas.
             </div>
-
-            {/* Botões de Ação */}
-            <div className="flex justify-end gap-3 pt-4 border-t border-neutral-800 mt-6">
-              <button
-                type="button"
-                onClick={onClose}
-                className="px-4 py-2 rounded-md text-neutral-300 hover:text-white hover:bg-neutral-800 transition-colors"
-              >
-                Cancelar
-              </button>
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="bg-zombies-115 text-black font-bold px-6 py-2 rounded-md hover:bg-cyan-400 transition-colors flex items-center gap-2 disabled:opacity-50"
-              >
-                {isSubmitting ? 'Salvando...' : (
-                  <>
-                    <Save className="w-4 h-4" />
-                    Registrar Partida
-                  </>
-                )}
-              </button>
-            </div>
-          </form>
+          )} 
           {/* Mini-Dashboard de Estatísticas do Mapa */}
           {!isLoadingLista && totalPartidas > 0 && (
             <div className="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -306,16 +314,18 @@ export function HistoricoModal({ isOpen, onClose, mapa }: HistoricoModalProps) {
                         </p>
                       )}
                     </div>
-
-                    <div className="shrink-0 flex items-start sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
-                      <button 
-                        onClick={() => handleDeleteRegistro(registro.id)}
-                        className="text-neutral-500 hover:text-red-500 p-2 rounded hover:bg-neutral-800 transition-colors"
-                        title="Excluir registro"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
+                    
+                    {user && (
+                      <div className="shrink-0 flex items-start sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                        <button 
+                          onClick={() => handleDeleteRegistro(registro.id)}
+                          className="text-neutral-500 hover:text-red-500 p-2 rounded hover:bg-neutral-800 transition-colors"
+                          title="Excluir registro"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
