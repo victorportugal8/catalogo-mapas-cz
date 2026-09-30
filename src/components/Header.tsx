@@ -23,9 +23,10 @@ export function Header({ onNewMap, onLogin, onLogout, user }: HeaderProps) {
 
         {/* Botão de Ação */}
         {user ? (
-          <div className="flex gap-3">
-            <button onClick={onNewMap} className="bg-zombies-115 text-black ...">
-              <Plus className="w-4 h-4" /> Novo Mapa
+          <div className="flex items-center gap-3">
+            <button onClick={onNewMap} className="bg-zombies-115 text-black font-bold px-4 py-2 rounded-md hover:bg-cyan-400 transition-colors flex items-center gap-2">
+              <Plus className="w-5 h-5" />
+              <span className="hidden sm:inline">Novo Mapa</span>
             </button>
             <button onClick={onLogout} className="bg-neutral-800 text-white p-2 rounded-md hover:bg-red-600 transition-colors" title="Sair">
               <LogOut className="w-4 h-4" />
