@@ -75,8 +75,7 @@ export function MapFormModal({ isOpen, onClose, mapaParaEditar }: MapFormModalPr
       imagem_url: imagemUrl,
     }
 
-    // Removemos o 'let' e o if/else longo.
-    // Usamos um ternário (?) para decidir qual chamada fazer diretamente em uma 'const'.
+    // Usa um ternário (?) para decidir qual chamada fazer diretamente em uma 'const'.
     const { error: supabaseError } = mapaParaEditar
       ? await supabase.from('mapas').update(dadosMapa).eq('id', mapaParaEditar.id)
       : await supabase.from('mapas').insert([dadosMapa])
@@ -100,7 +99,7 @@ export function MapFormModal({ isOpen, onClose, mapaParaEditar }: MapFormModalPr
       <div className="bg-zombies-surface border border-neutral-800 rounded-lg w-full max-w-lg shadow-2xl my-8">
         
         <div className="flex justify-between items-center p-4 border-b border-neutral-800">
-          {/* NOVO: Muda o título se estiver editando */}
+          {/* Muda o título se estiver editando */}
           <h2 className="text-lg font-bold text-white">
             {mapaParaEditar ? 'Editar Mapa' : 'Adicionar Novo Mapa'}
           </h2>
