@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
-import { Search, Trash2, Edit2, Star, LayoutGrid, List as ListIcon, Skull, Map, CheckCircle, Gamepad2, Target, History as HistoryIcon } from 'lucide-react'
+import { Search, Trash2, Edit2, Star, LayoutGrid, List as ListIcon, Skull, Map, CheckCircle, Gamepad2, Target, History as HistoryIcon, Share2 } from 'lucide-react'
+import { toPng } from 'html-to-image'
 import { supabase } from './lib/supabase'
 import type { User } from '@supabase/supabase-js'
 import type { Mapa } from './types/'
@@ -185,6 +186,30 @@ function App() {
   // A taxa de conclusão protege contra divisão por zero se o banco estiver vazio
   const taxaConclusao = totalMapas > 0 ? Math.round((totalFinalizados / totalMapas) * 100) : 0
 
+  const handleShareGlobalStats = async () => {
+    // Busca o elemento HTML pelo ID
+    const node = document.getElementById('combat-record-card')
+    
+    if (!node) return
+
+    try {
+      // Converte a div em um PNG com fundo escuro para não bugar bordas arredondadas
+      const dataUrl = await toPng(node, { 
+        quality: 0.95, 
+        backgroundColor: '#0a0a0a'
+      })
+      
+      // Cria um link invisível e força o download da imagem
+      const link = document.createElement('a');
+      link.download = 'zombies-combat-record.png'
+      link.href = dataUrl
+      link.click()
+    } catch (err) {
+      console.error('Erro ao gerar a imagem:', err)
+      alert('Não foi possível gerar a imagem. Tente novamente.')
+    }
+  }
+
   return (
     <div className="min-h-screen bg-zombies-background">
       <Header
@@ -219,9 +244,23 @@ function App() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* DASHBOARD DE ESTATÍSTICAS */}
         {!isLoading && totalMapas > 0 && (
-          <div className="bg-zombies-surface border border-neutral-800 rounded-xl p-4 sm:p-6 mb-8 shadow-lg">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+          <div className="bg-zombies-surface border border-neutral-800 rounded-xl p-4 sm:p-6 mb-8 shadow-lg" id="combat-record-card">
+            {/* CABEÇALHO DO DASHBOARD COM O BOTÃO DE PARTILHA */}
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-bold text-white uppercase tracking-wider">
+                Histórico de Partidas
+              </h2>
               
+              <button 
+                onClick={handleShareGlobalStats}
+                className="bg-zombies-115/10 text-zombies-115 hover:bg-zombies-115 hover:text-black px-3 py-2 rounded-md transition-colors flex items-center gap-2 text-sm font-bold border border-zombies-115/20 hover:border-zombies-115 cursor-pointer"
+                title="Baixar Histórico de Partidas"
+              >
+                <Share2 className="w-4 h-4" />
+                <span className="hidden sm:inline">Compartilhar</span>
+              </button>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
               {/* Card 1: Total */}
               <div onClick={() => setStatusFilter('todos')} className="bg-neutral-900/50 p-4 rounded-lg border border-neutral-800 flex items-center gap-4 cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:bg-neutral-800 hover:border-blue-500 hover:shadow-[0_0_15px_rgba(59,130,246,0.15)] group" title="Ver todos os mapas">
                 <div className="p-3 bg-blue-500/10 text-blue-400 rounded-full hidden sm:block">
