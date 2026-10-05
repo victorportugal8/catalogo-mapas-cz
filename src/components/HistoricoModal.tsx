@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
-import { X, Save, History as HistoryIcon, Trash2, Loader2, Trophy, Calendar, Hash } from 'lucide-react'
+import { X, Save, History as HistoryIcon, Trash2, Loader2, Trophy, Calendar, Hash, Share2 } from 'lucide-react'
+import { toPng } from 'html-to-image'
 import { supabase } from '../lib/supabase'
 import type { Mapa, Historico } from '../types'
 import type { User } from '@supabase/supabase-js'
@@ -109,227 +110,265 @@ export function HistoricoModal({ isOpen, onClose, mapa, user }: HistoricoModalPr
       alert('Partida registrada com sucesso!')
       onClose()
     }
+
+  }
+  
+  const handleShareMapHistory = async () => {
+    const node = document.getElementById('map-history-card')
+    if (!node) return
+
+    try {
+      const dataUrl = await toPng(node, { 
+        quality: 0.95, 
+        backgroundColor: '#171717', // Cor neutral-900 para combinar com o seu tema
+        width: node.scrollWidth,
+        height: node.scrollHeight,
+        pixelRatio: 2 // Melhora a qualidade do texto
+      })
+      
+      const link = document.createElement('a')
+      const nomeArquivo = mapa?.nome.replace(/\s+/g, '-').toLowerCase() || 'mapa'
+      link.download = `historico-${nomeArquivo}.png`
+      link.href = dataUrl
+      link.click()
+    } catch (err) {
+      console.error('Erro ao gerar a imagem:', err)
+      alert('Não foi possível gerar a imagem. Tente novamente.')
+    }
   }
 
   return (
     <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
       <div className="bg-zombies-surface border border-neutral-800 rounded-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl flex flex-col">
         
-        {/* Cabeçalho */}
-        <div className="flex justify-between items-center p-6 border-b border-neutral-800 sticky top-0 bg-zombies-surface z-10">
-          <div>
-            <h2 className="text-xl font-bold text-white flex items-center gap-2">
-              <HistoryIcon className="w-5 h-5 text-zombies-115" />
-              Diário de Sobrevivência
-            </h2>
-            <p className="text-sm text-neutral-400 mt-1">Registrando partida em: <span className="text-zombies-115 font-semibold">{mapa.nome}</span></p>
+          {/* Cabeçalho */}
+          <div className="flex justify-between items-center p-6 border-b border-neutral-800 sticky top-0 bg-zombies-surface z-10">
+            <div>
+              <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                <HistoryIcon className="w-5 h-5 text-zombies-115" />
+                Diário de Sobrevivência
+              </h2>
+              <p className="text-sm text-neutral-400 mt-1">Registrando partida em: <span className="text-zombies-115 font-semibold">{mapa.nome}</span></p>
+            </div>
+            <div className="flex gap-3">
+              <button 
+                onClick={handleShareMapHistory}
+                className="bg-zombies-115/10 text-zombies-115 hover:bg-zombies-115 hover:text-black px-3 py-2 rounded-md transition-colors flex items-center gap-2 text-sm font-bold border border-zombies-115/20 hover:border-zombies-115"
+                title="Compartilhar histórico deste mapa"
+              >
+                <Share2 className="w-4 h-4" />
+                <span className="hidden sm:inline">Compartilhar</span>
+              </button>
+              <button 
+                onClick={onClose}
+                className="text-neutral-400 hover:text-white p-2 rounded-full hover:bg-neutral-800 transition-colors"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
           </div>
-          <button 
-            onClick={onClose}
-            className="text-neutral-400 hover:text-white p-2 rounded-full hover:bg-neutral-800 transition-colors"
-          >
-            <X className="w-6 h-6" />
-          </button>
-        </div>
 
-        {/* Corpo do Modal (Formulário) */}
-        <div className="p-6">
-          {user ? (
-            <form onSubmit={handleSubmit} className="space-y-4">
-              
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {/* Data da Partida */}
-                <div>
-                  <label className="block text-sm font-medium text-neutral-300 mb-1">Data da Partida</label>
-                  <input 
-                    type="date"
-                    required
-                    value={dataPartida}
-                    onChange={(e) => setDataPartida(e.target.value)}
-                    className="w-full bg-neutral-900 border border-neutral-700 rounded-md px-3 py-2 text-white focus:outline-none focus:border-zombies-115"
-                  />
+          {/* Corpo do Modal (Formulário) */}
+          <div className="p-6">
+            {user ? (
+              <form onSubmit={handleSubmit} className="space-y-4">
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {/* Data da Partida */}
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-300 mb-1">Data da Partida</label>
+                    <input 
+                      type="date"
+                      required
+                      value={dataPartida}
+                      onChange={(e) => setDataPartida(e.target.value)}
+                      className="w-full bg-neutral-900 border border-neutral-700 rounded-md px-3 py-2 text-white focus:outline-none focus:border-zombies-115"
+                    />
+                  </div>
+
+                  {/* Round Alcançado */}
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-300 mb-1">Round Alcançado</label>
+                    <input 
+                      type="number"
+                      min="1"
+                      placeholder="Ex: 35"
+                      value={roundAlcancado}
+                      onChange={(e) => setRoundAlcancado(e.target.value)}
+                      className="w-full bg-neutral-900 border border-neutral-700 rounded-md px-3 py-2 text-white focus:outline-none focus:border-zombies-115 placeholder-neutral-600"
+                    />
+                  </div>
                 </div>
 
-                {/* Round Alcançado */}
+                {/* Jogadores (Campo de texto simples) */}
                 <div>
-                  <label className="block text-sm font-medium text-neutral-300 mb-1">Round Alcançado</label>
+                  <label className="block text-sm font-medium text-neutral-300 mb-1">Esquadrão (Jogadores)</label>
                   <input 
-                    type="number"
-                    min="1"
-                    placeholder="Ex: 35"
-                    value={roundAlcancado}
-                    onChange={(e) => setRoundAlcancado(e.target.value)}
+                    type="text"
+                    placeholder="Ex: Eu, Gabriel, Lucas"
+                    value={jogadores}
+                    onChange={(e) => setJogadores(e.target.value)}
                     className="w-full bg-neutral-900 border border-neutral-700 rounded-md px-3 py-2 text-white focus:outline-none focus:border-zombies-115 placeholder-neutral-600"
                   />
                 </div>
-              </div>
 
-              {/* Jogadores (Campo de texto simples) */}
-              <div>
-                <label className="block text-sm font-medium text-neutral-300 mb-1">Esquadrão (Jogadores)</label>
-                <input 
-                  type="text"
-                  placeholder="Ex: Eu, Gabriel, Lucas"
-                  value={jogadores}
-                  onChange={(e) => setJogadores(e.target.value)}
-                  className="w-full bg-neutral-900 border border-neutral-700 rounded-md px-3 py-2 text-white focus:outline-none focus:border-zombies-115 placeholder-neutral-600"
-                />
-              </div>
-
-              {/* Resultado */}
-              <div>
-                <label className="block text-sm font-medium text-neutral-300 mb-1">Resultado da Missão</label>
-                <input 
-                  type="text"
-                  placeholder="Ex: Game Over, Easter Egg Completo, Crash no servidor..."
-                  value={resultado}
-                  onChange={(e) => setResultado(e.target.value)}
-                  className="w-full bg-neutral-900 border border-neutral-700 rounded-md px-3 py-2 text-white focus:outline-none focus:border-zombies-115 placeholder-neutral-600"
-                />
-              </div>
-
-              {/* Observações */}
-              <div>
-                <label className="block text-sm font-medium text-neutral-300 mb-1">Observações (Opcional)</label>
-                <textarea 
-                  rows={3}
-                  placeholder="Detalhes da partida, táticas usadas, onde morreram..."
-                  value={observacoes}
-                  onChange={(e) => setObservacoes(e.target.value)}
-                  className="w-full bg-neutral-900 border border-neutral-700 rounded-md px-3 py-2 text-white focus:outline-none focus:border-zombies-115 placeholder-neutral-600 resize-none"
-                />
-              </div>
-
-              {/* Botões de Ação */}
-              <div className="flex justify-end gap-3 pt-4 border-t border-neutral-800 mt-6">
-                <button
-                  type="button"
-                  onClick={onClose}
-                  className="px-4 py-2 rounded-md text-neutral-300 hover:text-white hover:bg-neutral-800 transition-colors"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="bg-zombies-115 text-black font-bold px-6 py-2 rounded-md hover:bg-cyan-400 transition-colors flex items-center gap-2 disabled:opacity-50"
-                >
-                  {isSubmitting ? 'Salvando...' : (
-                    <>
-                      <Save className="w-4 h-4" />
-                      Registrar Partida
-                    </>
-                  )}
-                </button>
-              </div>
-            </form>
-          ) : (
-            <div className="bg-neutral-900/50 border border-neutral-800 rounded-lg p-6 text-center text-neutral-400">
-              Você está no modo de visualização. Faça login como administrador para registrar novas partidas.
-            </div>
-          )} 
-          {/* Mini-Dashboard de Estatísticas do Mapa */}
-          {!isLoadingLista && totalPartidas > 0 && (
-            <div className="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-4">
-              
-              {/* Card: Total de Partidas */}
-              <div className="bg-neutral-900/80 border border-neutral-800 rounded-lg p-4 flex items-center gap-3 shadow-inner">
-                <div className="p-2 bg-blue-500/10 text-blue-400 rounded-lg">
-                  <Hash className="w-5 h-5" />
-                </div>
+                {/* Resultado */}
                 <div>
-                  <p className="text-xs text-neutral-400 uppercase tracking-wider font-semibold">Partidas Jogadas</p>
-                  <p className="text-xl font-bold text-white">{totalPartidas}</p>
+                  <label className="block text-sm font-medium text-neutral-300 mb-1">Resultado da Missão</label>
+                  <input 
+                    type="text"
+                    placeholder="Ex: Game Over, Easter Egg Completo, Crash no servidor..."
+                    value={resultado}
+                    onChange={(e) => setResultado(e.target.value)}
+                    className="w-full bg-neutral-900 border border-neutral-700 rounded-md px-3 py-2 text-white focus:outline-none focus:border-zombies-115 placeholder-neutral-600"
+                  />
                 </div>
-              </div>
 
-              {/* Card: Maior Round */}
-              <div className="bg-neutral-900/80 border border-neutral-800 rounded-lg p-4 flex items-center gap-3 shadow-inner">
-                <div className="p-2 bg-yellow-500/10 text-yellow-400 rounded-lg">
-                  <Trophy className="w-5 h-5" />
-                </div>
+                {/* Observações */}
                 <div>
-                  <p className="text-xs text-neutral-400 uppercase tracking-wider font-semibold">Maior Round</p>
-                  <p className="text-xl font-bold text-white">{maiorRound > 0 ? maiorRound : '-'}</p>
+                  <label className="block text-sm font-medium text-neutral-300 mb-1">Observações (Opcional)</label>
+                  <textarea 
+                    rows={3}
+                    placeholder="Detalhes da partida, táticas usadas, onde morreram..."
+                    value={observacoes}
+                    onChange={(e) => setObservacoes(e.target.value)}
+                    className="w-full bg-neutral-900 border border-neutral-700 rounded-md px-3 py-2 text-white focus:outline-none focus:border-zombies-115 placeholder-neutral-600 resize-none"
+                  />
                 </div>
-              </div>
 
-              {/* Card: Última Partida */}
-              <div className="bg-neutral-900/80 border border-neutral-800 rounded-lg p-4 flex items-center gap-3 shadow-inner">
-                <div className="p-2 bg-green-500/10 text-green-400 rounded-lg">
-                  <Calendar className="w-5 h-5" />
+                {/* Botões de Ação */}
+                <div className="flex justify-end gap-3 pt-4 border-t border-neutral-800 mt-6">
+                  <button
+                    type="button"
+                    onClick={onClose}
+                    className="px-4 py-2 rounded-md text-neutral-300 hover:text-white hover:bg-neutral-800 transition-colors"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="bg-zombies-115 text-black font-bold px-6 py-2 rounded-md hover:bg-cyan-400 transition-colors flex items-center gap-2 disabled:opacity-50"
+                  >
+                    {isSubmitting ? 'Salvando...' : (
+                      <>
+                        <Save className="w-4 h-4" />
+                        Registrar Partida
+                      </>
+                    )}
+                  </button>
                 </div>
-                <div>
-                  <p className="text-xs text-neutral-400 uppercase tracking-wider font-semibold">Última Partida</p>
-                  <p className="text-sm font-bold text-white">{ultimaPartida}</p>
-                </div>
-              </div>
-
-            </div>
-          )}
-
-          {/* Linha do Tempo / Lista de Partidas */}
-          <div className="mt-8 pt-8 border-t-2 border-dashed border-neutral-800">
-            <h3 className="text-lg font-bold text-white mb-4">Partidas Anteriores</h3>
-            
-            {isLoadingLista ? (
-              <div className="flex justify-center py-8">
-                <Loader2 className="w-8 h-8 text-zombies-115 animate-spin" />
-              </div>
-            ) : historicoLista.length === 0 ? (
-              <div className="text-center py-8 text-neutral-500 bg-neutral-900/50 rounded-lg border border-neutral-800">
-                Nenhuma partida registrada para este mapa ainda.
-              </div>
+              </form>
             ) : (
-              <div className="space-y-3">
-                {historicoLista.map((registro) => (
-                  <div key={registro.id} className="bg-neutral-900 border border-neutral-800 p-4 rounded-lg flex flex-col sm:flex-row gap-4 justify-between group hover:border-neutral-700 transition-colors">
-                    
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <span className="text-sm text-neutral-400 font-mono">
-                          {new Date(registro.data_partida).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}
-                        </span>
-                        {registro.round_alcancado && (
-                          <span className="bg-zombies-115/10 text-zombies-115 text-xs px-2 py-0.5 rounded font-bold">
-                            Round {registro.round_alcancado}
+              <div className="bg-neutral-900/50 border border-neutral-800 rounded-lg p-6 text-center text-neutral-400">
+                Você está no modo de visualização. Faça login como administrador para registrar novas partidas.
+              </div>
+            )}
+            {/* Camada para foto. Estica de acordo com o conteúdo e ignora o corte do scroll */}
+            <div id="map-history-card" className="bg-zombies-surface flex flex-col w-full rounded-xl"> 
+            {/* Mini-Dashboard de Estatísticas do Mapa */}
+            {!isLoadingLista && totalPartidas > 0 && (
+              <div className="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-4">
+                
+                {/* Card: Total de Partidas */}
+                <div className="bg-neutral-900/80 border border-neutral-800 rounded-lg p-4 flex items-center gap-3 shadow-inner">
+                  <div className="p-2 bg-blue-500/10 text-blue-400 rounded-lg">
+                    <Hash className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-neutral-400 uppercase tracking-wider font-semibold">Partidas Jogadas</p>
+                    <p className="text-xl font-bold text-white">{totalPartidas}</p>
+                  </div>
+                </div>
+
+                {/* Card: Maior Round */}
+                <div className="bg-neutral-900/80 border border-neutral-800 rounded-lg p-4 flex items-center gap-3 shadow-inner">
+                  <div className="p-2 bg-yellow-500/10 text-yellow-400 rounded-lg">
+                    <Trophy className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-neutral-400 uppercase tracking-wider font-semibold">Maior Round</p>
+                    <p className="text-xl font-bold text-white">{maiorRound > 0 ? maiorRound : '-'}</p>
+                  </div>
+                </div>
+
+                {/* Card: Última Partida */}
+                <div className="bg-neutral-900/80 border border-neutral-800 rounded-lg p-4 flex items-center gap-3 shadow-inner">
+                  <div className="p-2 bg-green-500/10 text-green-400 rounded-lg">
+                    <Calendar className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-neutral-400 uppercase tracking-wider font-semibold">Última Partida</p>
+                    <p className="text-sm font-bold text-white">{ultimaPartida}</p>
+                  </div>
+                </div>
+
+              </div>
+            )}
+
+            {/* Linha do Tempo / Lista de Partidas */}
+            <div className="mt-8 pt-8 border-t-2 border-dashed border-neutral-800">
+              <h3 className="text-lg font-bold text-white mb-4">Partidas Anteriores</h3>
+              
+              {isLoadingLista ? (
+                <div className="flex justify-center py-8">
+                  <Loader2 className="w-8 h-8 text-zombies-115 animate-spin" />
+                </div>
+              ) : historicoLista.length === 0 ? (
+                <div className="text-center py-8 text-neutral-500 bg-neutral-900/50 rounded-lg border border-neutral-800">
+                  Nenhuma partida registrada para este mapa ainda.
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {historicoLista.map((registro) => (
+                    <div key={registro.id} className="bg-neutral-900 border border-neutral-800 p-4 rounded-lg flex flex-col sm:flex-row gap-4 justify-between group hover:border-neutral-700 transition-colors">
+                      
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-2">
+                          <span className="text-sm text-neutral-400 font-mono">
+                            {new Date(registro.data_partida).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}
                           </span>
+                          {registro.round_alcancado && (
+                            <span className="bg-zombies-115/10 text-zombies-115 text-xs px-2 py-0.5 rounded font-bold">
+                              Round {registro.round_alcancado}
+                            </span>
+                          )}
+                        </div>
+                        
+                        {registro.resultado && (
+                          <p className={`font-bold text-lg mb-1 ${obterCorDoResultado(registro.resultado)}`}>{registro.resultado}</p>
+                        )}
+                        
+                        {registro.jogadores && (
+                          <p className="text-sm text-neutral-300">
+                            <span className="text-neutral-500 mr-1">Esquadrão:</span> 
+                            {registro.jogadores}
+                          </p>
+                        )}
+                        
+                        {registro.observacoes && (
+                          <p className="text-sm text-neutral-400 mt-2 italic bg-black/20 p-2 rounded border-l-2 border-neutral-700">
+                            "{registro.observacoes}"
+                          </p>
                         )}
                       </div>
                       
-                      {registro.resultado && (
-                        <p className={`font-bold text-lg mb-1 ${obterCorDoResultado(registro.resultado)}`}>{registro.resultado}</p>
-                      )}
-                      
-                      {registro.jogadores && (
-                        <p className="text-sm text-neutral-300">
-                          <span className="text-neutral-500 mr-1">Esquadrão:</span> 
-                          {registro.jogadores}
-                        </p>
-                      )}
-                      
-                      {registro.observacoes && (
-                        <p className="text-sm text-neutral-400 mt-2 italic bg-black/20 p-2 rounded border-l-2 border-neutral-700">
-                          "{registro.observacoes}"
-                        </p>
+                      {user && (
+                        <div className="shrink-0 flex items-start sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                          <button 
+                            onClick={() => handleDeleteRegistro(registro.id)}
+                            className="text-neutral-500 hover:text-red-500 p-2 rounded hover:bg-neutral-800 transition-colors"
+                            title="Excluir registro"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
                       )}
                     </div>
-                    
-                    {user && (
-                      <div className="shrink-0 flex items-start sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
-                        <button 
-                          onClick={() => handleDeleteRegistro(registro.id)}
-                          className="text-neutral-500 hover:text-red-500 p-2 rounded hover:bg-neutral-800 transition-colors"
-                          title="Excluir registro"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
