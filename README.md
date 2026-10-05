@@ -19,6 +19,7 @@
 * 🛡️ **Sistema de Fallback Manual:** Sistema à prova de falhas que detecta *Rate Limits* (bloqueios temporários) da Steam e libera formulários manuais, garantindo que o cadastro nunca fique travado.
 * 📊 **Mini-Dashboard Analítico:** Cálculo em tempo real do histórico do banco de dados para exibir dinamicamente o *Maior Round*, *Total de Partidas* e *Última Data Jogada* por mapa.
 * 📖 **Diário de Sobrevivência:** Histórico de partidas individualizado por mapa, com feedback visual codificado por cores via processamento de strings (ex: verde para "Easter Egg", vermelho para "Game Over").
+* 🔗 **Compartilhamento de Histórico:** Botão para compartilhar o histórico(geral e por mapa) das partidas.
 * 📱 **UI/UX Responsiva:** Design System focado no tema escuro (Dark Mode) com alternância fluida entre visualização em Grade (Cards) e Lista (Tabela), adaptando-se do mobile ao desktop.
 
 ---
