@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { X, Loader2, Image as ImageIcon } from 'lucide-react'
+import { X, Loader2, Image as ImageIcon, Star } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import type { Mapa } from '../types'
 
@@ -15,6 +15,7 @@ export function MapFormModal({ isOpen, onClose, mapaParaEditar }: MapFormModalPr
   const [nome, setNome] = useState(mapaParaEditar?.nome || '')
   const [status, setStatus] = useState(mapaParaEditar?.status || 'nao_jogado')
   const [nota, setNota] = useState(mapaParaEditar?.nota ? String(mapaParaEditar.nota) : '')
+  const [hoverNota, setHoverNota] = useState(0);
   const [tags, setTags] = useState(mapaParaEditar?.tags ? mapaParaEditar.tags.join(', ') : '')
   const [imagemUrl, setImagemUrl] = useState(mapaParaEditar?.imagem_url || '')
   
@@ -179,15 +180,48 @@ export function MapFormModal({ isOpen, onClose, mapaParaEditar }: MapFormModalPr
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-neutral-300 mb-1">Nota (1 a 5)</label>
-              <input 
+              <label className="block text-sm font-medium text-neutral-300 mb-1">Nota</label>
+              {/* <input 
                 type="number" 
                 min="1" max="5"
                 value={nota}
                 onChange={(e) => setNota(e.target.value)}
                 placeholder="Ex: 5"
                 className="w-full bg-neutral-900 border border-neutral-700 rounded-md px-3 py-2 text-white focus:outline-none focus:border-zombies-115"
-              />
+              /> */}
+                <div className="flex items-center gap-1 h-10.5" onMouseLeave={() => setHoverNota(0)}>
+                  {[1, 2, 3, 4, 5].map((star) => {
+                    const isFilled = hoverNota ? star <= hoverNota : star <= Number(nota)
+                    return(
+                      <button
+                        key={star}
+                        type="button"
+                        onClick={() => setNota(String(star))}
+                        onMouseEnter={() => setHoverNota(star)}
+                        className="focus:outline-none transition-transform hover:scale-110"
+                      >
+                        <Star
+                          className={`w-7 h-7 transition-colors duration-200 ${
+                            isFilled
+                              ? 'text-yellow-500 fill-yellow-500'
+                              : 'text-neutral-700 hover:text-yellow-500/50'
+                          }`}
+                        />
+                      </button>
+                    )
+                  })}
+                  
+                  {/* Botão opcional para zerar a nota caso mude de ideia */}
+                  {Number(nota) > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => {setNota(''); setHoverNota(0)}}
+                      className="ml-3 text-xs text-neutral-500 hover:text-red-400 transition-colors"
+                    >
+                      Limpar
+                    </button>
+                  )}
+                </div>
             </div>
           </div>
 
